@@ -25,7 +25,7 @@ export function productEnquiryLink(product: Product, variant?: Variant): string 
   if (variant) {
     lines.push(`Size: ${variant.size}`, `Colour: ${variant.colour}`);
   }
-  lines.push(`Link: ${origin()}/product/${product.slug}`);
+  lines.push(`Link: ${origin()}${import.meta.env.BASE_URL.replace(/\/$/, "")}/product/${product.slug}`);
   return whatsappLink(lines.join("\n"));
 }
 
