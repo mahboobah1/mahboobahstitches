@@ -1,0 +1,55 @@
+@import "@fontsource/cormorant-garamond/500.css";
+@import "@fontsource/cormorant-garamond/600.css";
+@import "@fontsource/cormorant-garamond/500-italic.css";
+@import "@fontsource-variable/inter";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+  body {
+    @apply bg-cream font-sans text-royal antialiased;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  h1, h2, h3 { @apply font-display font-medium text-royal; letter-spacing: -0.01em; }
+  h1 { @apply text-4xl leading-[1.05] sm:text-6xl; }
+  h2 { @apply text-3xl leading-tight sm:text-4xl; }
+  h3 { @apply text-xl sm:text-2xl; }
+  p { @apply leading-relaxed; }
+  :focus-visible { @apply outline outline-2 outline-offset-2 outline-gold-deep; }
+  ::selection { background: #B69A65; color: #fff; }
+}
+
+@layer components {
+  .wrap { @apply mx-auto w-full max-w-page px-5 sm:px-8; }
+  .section { @apply py-14 sm:py-20; }
+  .btn {
+    @apply inline-flex min-h-[44px] items-center justify-center rounded-sm px-6 py-2.5 text-sm font-medium tracking-wide transition-colors;
+  }
+  .btn-primary { @apply btn bg-royal text-cream hover:bg-royal-deep; }
+  .btn-ghost { @apply btn border border-royal/40 text-royal hover:border-royal hover:bg-royal/5; }
+  .btn-gold { @apply btn bg-gold text-royal-deep hover:bg-gold-deep hover:text-white; }
+  .link-line { @apply underline decoration-gold decoration-1 underline-offset-4 hover:decoration-2; }
+  .field {
+    @apply min-h-[44px] w-full rounded-sm border border-royal/30 bg-white px-3 py-2 text-base text-royal placeholder:text-royal/50;
+  }
+  /* The stitched thread: the one recurring brand device, used as a divider and frame. */
+  .stitch-x { height: 0; border-top: 1.5px dashed #B69A65; }
+  .stitch-frame { outline: 1.5px dashed #B69A65; outline-offset: 8px; }
+  /* Arched image frame, a nod to a mihrab and a tailor's dress form. */
+  .arch { border-top-left-radius: 999px; border-top-right-radius: 999px; }
+}
+
+@keyframes draw { to { stroke-dashoffset: 0; } }
+.thread-draw {
+  stroke-dasharray: 1400;
+  stroke-dashoffset: 1400;
+  animation: draw 2.6s ease-out 0.3s forwards;
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .thread-draw { animation: none; stroke-dashoffset: 0; }
+  * { transition-duration: 0.01ms !important; }
+}
