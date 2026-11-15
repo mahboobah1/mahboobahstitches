@@ -12,9 +12,9 @@ interface Props {
 export function Logo({ className = "h-14 w-auto", asLink = true, eager = false }: Props) {
   const img = (
     <picture>
-      <source srcSet="/brand/logo.webp" type="image/webp" />
+      <source srcSet={`${import.meta.env.BASE_URL}brand/logo.webp`} type="image/webp" />
       <img
-        src="/brand/logo.png"
+        src={`${import.meta.env.BASE_URL}brand/logo.png`}
         alt={`${site.name}: ${site.tagline}`}
         className={className}
         width={1000}
