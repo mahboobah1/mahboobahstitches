@@ -7,7 +7,7 @@ import "./styles/index.css";
 
 createRoot(document.getElementById("root") as HTMLElement).render(
   <StrictMode>
-    <BrowserRouter>
+    <BrowserRouter basename={import.meta.env.BASE_URL.replace(/\/$/, "") || "/"}>
       <StoreProvider>
         <App />
       </StoreProvider>
