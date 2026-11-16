@@ -3,7 +3,12 @@
 Modest fashion e-commerce: React + Vite + TypeScript + Tailwind on Cloudflare Pages,
 with a Cloudflare Workers / D1 backend arriving in later phases.
 
-## Status: Phase 1 (storefront)
+## Status: Phase 2 (backend foundation)
+Added in Phase 2: D1 database schema (migrations/), secure sign-in, customer accounts, one-time owner setup,
+role-based permissions, audit log, rate limiting, and a protected /admin overview with live counts.
+Backend code: `worker/`. Setup: `docs/SETUP-CLOUDFLARE.md`.
+
+## Phase 1 (storefront)
 Working now: homepage, shop with search, filter and sort, collections, product pages with variant
 selection, cart (saved on the device), wishlist, WhatsApp click-to-chat ordering, contact page, brand logo.
 

@@ -1,0 +1,17 @@
+name = "mahboobahstitches"
+main = "worker/index.ts"
+compatibility_date = "2025-06-01"
+
+# The built website (Vite output) is served as static files; /api/* runs the Worker.
+[assets]
+directory = "./dist"
+binding = "ASSETS"
+not_found_handling = "single-page-application"
+run_worker_first = ["/api/*"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "mahboobah-db"
+# The deploy workflow replaces this placeholder with your D1_DATABASE_ID secret. Do not edit.
+database_id = "REPLACE_WITH_DATABASE_ID"
+migrations_dir = "migrations"
