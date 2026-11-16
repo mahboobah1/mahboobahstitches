@@ -5,10 +5,16 @@ export interface Variant {
   sku: string;
   size: string;
   colour: string;
-  /** Price in minor units (kobo). null = not set yet. */
-  priceMinor: number | null;
-  /** false = cannot be bought. Real stock counts arrive with the database in Phase 3. */
+  /** Minor units (kobo). */
+  priceMinor: number;
+  currency: string;
+  /** Computed by the server from stock. false = cannot be bought. */
   available: boolean;
+}
+
+export interface ProductImage {
+  url: string;
+  alt: string;
 }
 
 export interface Product {
@@ -17,15 +23,15 @@ export interface Product {
   name: string;
   description: string;
   collectionSlug: string;
+  collectionName: string;
   subcategory: string;
   type: FulfilmentType;
-  variants: Variant[];
-  fulfilmentInfo: string;
-  shippingInfo: string;
   isNew: boolean;
   isBestseller: boolean;
-  /** true = sample content only, never real merchandise. */
-  isDemo: boolean;
+  fulfilmentInfo: string;
+  shippingInfo: string;
+  images: ProductImage[];
+  variants: Variant[];
 }
 
 export interface Collection {
