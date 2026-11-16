@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { PlaceholderImage } from "../components/PlaceholderImage";
+import { ProductImage } from "../components/ProductImage";
 import { MAX_CART_QTY, useStore } from "../context/StoreContext";
 import { formatMoney } from "../lib/format";
 import { usePageMeta } from "../lib/usePageMeta";
@@ -20,8 +20,7 @@ export default function CartPage() {
     );
   }
 
-  const priced = lines.every((l) => l.variant.priceMinor !== null);
-  const total = lines.reduce((sum, l) => sum + (l.variant.priceMinor ?? 0) * l.qty, 0);
+  const total = lines.reduce((sum, l) => sum + l.variant.priceMinor * l.qty, 0);
 
   return (
     <div className="wrap py-10 sm:py-14">
@@ -30,11 +29,11 @@ export default function CartPage() {
         <ul className="divide-y divide-dashed divide-gold border-y border-dashed border-gold">
           {lines.map((l) => (
             <li key={l.variant.id} className="grid grid-cols-[88px_1fr] gap-4 py-5">
-              <PlaceholderImage label={l.product.name} className="aspect-[4/5] w-full" showLabel={false} />
+              <ProductImage product={l.product} className="aspect-[4/5] w-full" />
               <div>
                 <Link to={`/product/${l.product.slug}`} className="font-display text-xl">{l.product.name}</Link>
                 <p className="text-sm text-royal/75">{l.variant.size} · {l.variant.colour} · Ref {l.variant.sku}</p>
-                <p className="mt-1 text-sm">{formatMoney(l.variant.priceMinor)}</p>
+                <p className="mt-1 text-sm">{formatMoney(l.variant.priceMinor, l.variant.currency)}</p>
                 <div className="mt-3 flex flex-wrap items-center gap-4">
                   <div className="flex items-center">
                     <button type="button" className="btn h-11 w-11 border border-royal/30 !px-0"
@@ -56,7 +55,7 @@ export default function CartPage() {
           <h2 className="text-2xl">Summary</h2>
           <dl className="mt-4 space-y-2 text-sm">
             <div className="flex justify-between"><dt>Items</dt><dd>{lines.reduce((n, l) => n + l.qty, 0)}</dd></div>
-            <div className="flex justify-between"><dt>Subtotal</dt><dd>{priced ? formatMoney(total) : "To be confirmed"}</dd></div>
+            <div className="flex justify-between"><dt>Subtotal</dt><dd>{formatMoney(total, lines[0].variant.currency)}</dd></div>
             <div className="flex justify-between"><dt>Delivery</dt><dd>Confirmed at order</dd></div>
           </dl>
           <a href={cartSummaryLink(lines)} target="_blank" rel="noopener noreferrer" className="btn-primary mt-6 w-full">

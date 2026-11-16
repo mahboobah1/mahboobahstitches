@@ -1,19 +1,20 @@
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { ProductGrid } from "../components/ProductGrid";
-import { getCollection } from "../data/collections";
-import { demoProducts } from "../data/demo-products";
+import { useCatalogue } from "../context/CatalogueContext";
 import { usePageMeta } from "../lib/usePageMeta";
 import NotFoundPage from "./NotFoundPage";
 
 export default function CollectionPage() {
   const { slug = "" } = useParams();
   const [params, setParams] = useSearchParams();
+  const { getCollection, products, status } = useCatalogue();
   const collection = getCollection(slug);
   usePageMeta(collection?.name, collection?.blurb);
+  if (status === "loading") return <div className="wrap py-20 text-center" role="status">Loading…</div>;
   if (!collection) return <NotFoundPage />;
 
   const sub = params.get("sub") ?? "";
-  const items = demoProducts.filter(
+  const items = products.filter(
     (p) => p.collectionSlug === slug && (!sub || p.subcategory === sub),
   );
 
@@ -53,7 +54,7 @@ export default function CollectionPage() {
         ) : (
           <div className="border border-dashed border-gold p-8 text-center">
             <p className="font-display text-2xl">No items here yet.</p>
-            <p className="mt-2 text-royal/75">Products appear here once the owner adds them.</p>
+            <p className="mt-2 text-royal/75">New styles will appear here soon.</p>
           </div>
         )}
       </div>

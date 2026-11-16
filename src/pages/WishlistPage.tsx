@@ -1,13 +1,14 @@
 import { Link } from "react-router-dom";
 import { ProductGrid } from "../components/ProductGrid";
-import { demoProducts } from "../data/demo-products";
+import { useCatalogue } from "../context/CatalogueContext";
 import { useStore } from "../context/StoreContext";
 import { usePageMeta } from "../lib/usePageMeta";
 
 export default function WishlistPage() {
   usePageMeta("Wishlist");
   const { wishlist } = useStore();
-  const items = demoProducts.filter((p) => wishlist.includes(p.slug));
+  const { products } = useCatalogue();
+  const items = products.filter((p) => wishlist.includes(p.slug));
   return (
     <div className="wrap py-10 sm:py-14">
       <h1 className="text-4xl sm:text-5xl">Wishlist</h1>

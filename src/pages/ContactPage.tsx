@@ -11,7 +11,7 @@ export default function ContactPage() {
     <div className="wrap max-w-3xl py-10 sm:py-14">
       <h1 className="text-4xl sm:text-5xl">Contact us</h1>
       <p className="mt-3 text-lg text-royal/80">The quickest way to reach us is WhatsApp.</p>
-      <a href={generalEnquiryLink("I have a question.")} target={hasWhatsapp ? "_blank" : undefined} rel="noopener noreferrer" className="btn-primary mt-6">
+      <a href={generalEnquiryLink("I have a question.")} target={hasWhatsapp() ? "_blank" : undefined} rel="noopener noreferrer" className="btn-primary mt-6">
         Chat on WhatsApp
       </a>
       <dl className="mt-10 border-t border-dashed border-gold">

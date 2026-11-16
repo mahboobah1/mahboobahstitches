@@ -1,7 +1,6 @@
 import { Link, useSearchParams } from "react-router-dom";
 import { ProductGrid } from "../components/ProductGrid";
-import { collections } from "../data/collections";
-import { demoProducts } from "../data/demo-products";
+import { useCatalogue } from "../context/CatalogueContext";
 import type { FulfilmentType, Product } from "../data/types";
 import { fulfilmentLabel } from "../lib/format";
 import { usePageMeta } from "../lib/usePageMeta";
@@ -30,6 +29,7 @@ export function filterProducts(
 
 export default function ShopPage() {
   usePageMeta("Shop", "Browse all modest fashion, prayer wear and gifts.");
+  const { collections, products, status } = useCatalogue();
   const [params, setParams] = useSearchParams();
   const q = params.get("q") ?? "";
   const collection = params.get("collection") ?? "";
@@ -43,7 +43,7 @@ export default function ShopPage() {
     setParams(next, { replace: true });
   };
 
-  const results = filterProducts(demoProducts, { q, collection, type, sort });
+  const results = filterProducts(products, { q, collection, type, sort });
   const hasFilters = q || collection || type;
 
   return (
@@ -81,16 +81,18 @@ export default function ShopPage() {
       </form>
 
       <p className="mt-6 text-sm text-royal/75" role="status">
-        {results.length} {results.length === 1 ? "item" : "items"} · sample products for preview
+        {status === "loading" ? "Loading…" : `${results.length} ${results.length === 1 ? "item" : "items"}`}
       </p>
 
       <div className="mt-6">
-        {results.length > 0 ? (
+        {status === "error" ? (
+          <p role="alert" className="text-[#9b2c2c]">The shop could not be loaded. Please refresh the page.</p>
+        ) : results.length > 0 ? (
           <ProductGrid products={results} />
-        ) : (
+        ) : status === "loading" ? null : (
           <div className="border border-dashed border-gold p-8 text-center">
-            <p className="font-display text-2xl">Nothing matches that search.</p>
-            <p className="mt-2 text-royal/75">Try a different word or clear the filters.</p>
+            <p className="font-display text-2xl">{products.length === 0 ? "New styles are coming soon." : "Nothing matches that search."}</p>
+            <p className="mt-2 text-royal/75">{products.length === 0 ? "Please check back shortly." : "Try a different word or clear the filters."}</p>
             {hasFilters && (
               <Link to="/shop" className="btn-primary mt-5">Clear filters</Link>
             )}

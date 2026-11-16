@@ -48,7 +48,7 @@ export default function AdminDashboardPage() {
         </dl>
       )}
       <p className="mt-10 text-sm text-royal/70">
-        Products, inventory, orders and the other management screens are added in the next phases.
+        Orders, payments, bookings, bespoke requests, promotions and reviews are added in the next phases.
       </p>
     </>
   );
