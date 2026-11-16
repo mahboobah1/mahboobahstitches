@@ -1,7 +1,6 @@
 /**
- * Development-only stand-in for product photography.
- * It is clearly labelled and is NOT presented as a real product photo.
- * Replace with real images from /public/images (or Cloudflare R2 later).
+ * Shown only while a product has no photo yet. It is clearly labelled and never passed off as a real
+ * product photo. Photos are uploaded in Admin > Products.
  */
 interface Props {
   label: string;
@@ -21,7 +20,7 @@ export function PlaceholderImage({ label, tone = "powder", className = "", showL
   return (
     <div
       role="img"
-      aria-label={`Demo image placeholder: ${label}`}
+      aria-label={`Photo coming soon: ${label}`}
       className={`relative flex items-end justify-start overflow-hidden ${className}`}
       style={{ backgroundColor: t.bg, color: t.fg }}
     >
@@ -30,7 +29,7 @@ export function PlaceholderImage({ label, tone = "powder", className = "", showL
       </svg>
       {showLabel && (
         <span className="relative m-3 rounded-sm bg-white/80 px-2 py-1 text-xs text-royal">
-          Demo image
+          Photo coming soon
         </span>
       )}
     </div>

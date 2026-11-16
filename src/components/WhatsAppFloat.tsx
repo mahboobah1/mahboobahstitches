@@ -8,7 +8,7 @@ export function WhatsAppFloat() {
   const cls =
     "fixed bottom-5 right-5 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-[#1f7a4d] text-white shadow-lg hover:bg-[#186a42]";
   const label = `Chat with ${site.name} on WhatsApp`;
-  if (!hasWhatsapp) {
+  if (!hasWhatsapp()) {
     return (
       <Link to="/contact" className={cls} aria-label={label} style={{ marginBottom: "env(safe-area-inset-bottom)" }}>
         <WhatsAppIcon className="h-7 w-7" />

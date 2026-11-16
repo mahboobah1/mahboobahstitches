@@ -30,8 +30,14 @@ export function AdminLayout() {
   return (
     <div className="wrap py-8 sm:py-12">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-dashed border-gold pb-4">
-        <nav aria-label="Admin" className="flex flex-wrap gap-5">
+        <nav aria-label="Admin" className="flex flex-wrap gap-x-5 gap-y-1">
           <NavLink end to="/admin" className={link}>Overview</NavLink>
+          {can("products:write") && <NavLink to="/admin/products" className={link}>Products</NavLink>}
+          {can("products:write") && <NavLink to="/admin/collections" className={link}>Collections</NavLink>}
+          {(can("inventory:write") || can("products:write")) && <NavLink to="/admin/inventory" className={link}>Inventory</NavLink>}
+          {can("content:write") && <NavLink to="/admin/content" className={link}>Pages</NavLink>}
+          {can("settings:write") && <NavLink to="/admin/settings" className={link}>Settings</NavLink>}
+          {can("staff:manage") && <NavLink to="/admin/staff" className={link}>People</NavLink>}
           {can("audit:read") && <NavLink to="/admin/audit" className={link}>Audit log</NavLink>}
         </nav>
         <p className="text-sm text-royal/75">
