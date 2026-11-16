@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
-import { getVariant } from "../data/demo-products";
+import { useCatalogue } from "./CatalogueContext";
 import type { Product, Variant } from "../data/types";
 import { loadJSON, saveJSON } from "../lib/storage";
 
@@ -33,6 +33,7 @@ const WISH_KEY = "ms_wishlist_v1";
 const StoreContext = createContext<StoreValue | null>(null);
 
 export function StoreProvider({ children }: { children: ReactNode }) {
+  const { getVariant, status } = useCatalogue();
   const [items, setItems] = useState<CartItem[]>(() => loadJSON<CartItem[]>(CART_KEY, []));
   const [wishlist, setWishlist] = useState<string[]>(() => loadJSON<string[]>(WISH_KEY, []));
 
@@ -43,13 +44,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     const out: CartLine[] = [];
     for (const it of items) {
       const found = getVariant(it.variantId);
-      // Drop lines whose variant no longer exists or can no longer be bought.
+      // Lines whose variant was removed or sold out are hidden. Prices always come from the live catalogue.
       if (found && found.variant.available) out.push({ ...found, qty: it.qty });
     }
     return out;
-  }, [items]);
+  }, [items, getVariant]);
 
   const addToCart = useCallback((variantId: string, qty = 1) => {
+    if (status !== "ready") return { ok: false, message: "The shop is still loading. Try again in a moment." };
     const found = getVariant(variantId);
     if (!found) return { ok: false, message: "That item could not be found." };
     if (!found.variant.available) return { ok: false, message: "That size and colour is unavailable." };
@@ -63,7 +65,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       return [...prev, { variantId, qty: Math.min(MAX_QTY, qty) }];
     });
     return { ok: true, message: "Added to your cart." };
-  }, []);
+  }, [getVariant, status]);
 
   const setQty = useCallback((variantId: string, qty: number) => {
     const safe = Math.max(1, Math.min(MAX_QTY, Math.floor(qty) || 1));
