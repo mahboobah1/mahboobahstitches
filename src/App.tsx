@@ -1,13 +1,20 @@
 import { Route, Routes } from "react-router-dom";
+import { AdminLayout } from "./components/AdminLayout";
 import { Layout } from "./components/Layout";
+import AccountPage from "./pages/AccountPage";
+import AdminAuditPage from "./pages/AdminAuditPage";
+import AdminDashboardPage from "./pages/AdminDashboardPage";
+import AdminSetupPage from "./pages/AdminSetupPage";
 import CartPage from "./pages/CartPage";
 import CollectionPage from "./pages/CollectionPage";
 import CollectionsPage from "./pages/CollectionsPage";
 import ComingSoonPage from "./pages/ComingSoonPage";
 import ContactPage from "./pages/ContactPage";
 import HomePage from "./pages/HomePage";
+import LoginPage from "./pages/LoginPage";
 import NotFoundPage from "./pages/NotFoundPage";
 import ProductPage from "./pages/ProductPage";
+import RegisterPage from "./pages/RegisterPage";
 import ShopPage from "./pages/ShopPage";
 import WishlistPage from "./pages/WishlistPage";
 
@@ -37,14 +44,20 @@ export default function App() {
         <Route path="policies" element={soon("Policies", "Phase 7", "Delivery, returns and privacy policies will be published here once the business confirms them.")} />
         <Route path="checkout" element={soon("Checkout", "Phase 4", "Secure online payment is not switched on yet. Send your cart to us on WhatsApp to order.", "I would like to place an order.")} />
 
-        <Route path="account" element={soon("My account", "Phase 2", "Sign-in and account pages arrive with the database.")} />
+        <Route path="account" element={<AccountPage />} />
+        <Route path="account/login" element={<LoginPage />} />
+        <Route path="account/register" element={<RegisterPage />} />
         <Route path="account/orders" element={soon("My orders", "Phase 4", "Order tracking arrives with online checkout.")} />
         <Route path="account/wishlist" element={<WishlistPage />} />
         <Route path="account/addresses" element={soon("My addresses", "Phase 4", "Saved addresses arrive with online checkout.")} />
         <Route path="account/bookings" element={soon("My bookings", "Phase 5", "Your appointments will be listed here.")} />
 
-        {/* Admin is intentionally empty until real authentication exists (Phase 2). */}
-        <Route path="admin/*" element={soon("Admin", "Phase 2 and 3", "The administration area is built after secure sign-in is in place. Nothing is exposed here.")} />
+        <Route path="admin/setup" element={<AdminSetupPage />} />
+        <Route path="admin" element={<AdminLayout />}>
+          <Route index element={<AdminDashboardPage />} />
+          <Route path="audit" element={<AdminAuditPage />} />
+          <Route path="*" element={soon("Coming soon", "Phase 3 to 7", "This admin module is built in a later phase.")} />
+        </Route>
         <Route path="*" element={<NotFoundPage />} />
       </Route>
     </Routes>
