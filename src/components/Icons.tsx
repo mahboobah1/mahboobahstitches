@@ -28,6 +28,8 @@ export const HeartIcon = ({ className, filled }: P & { filled?: boolean }) => (
     <path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.5A4 4 0 0 1 19 10c0 5.6-7 10-7 10Z" />
   </svg>
 );
+export const UserIcon = ({ className }: P) =>
+  base(<><circle cx="12" cy="8" r="4" /><path d="M4.5 20c.8-4 3.8-6 7.5-6s6.7 2 7.5 6" /></>, className);
 export const MenuIcon = ({ className }: P) => base(<><path d="M4 7h16" /><path d="M4 12h16" /><path d="M4 17h16" /></>, className);
 export const CloseIcon = ({ className }: P) => base(<><path d="m6 6 12 12" /><path d="M18 6 6 18" /></>, className);
 export const WhatsAppIcon = ({ className }: P) => (

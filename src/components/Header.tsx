@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { site } from "../config/site";
 import { useStore } from "../context/StoreContext";
-import { BagIcon, CloseIcon, HeartIcon, MenuIcon, SearchIcon } from "./Icons";
+import { BagIcon, CloseIcon, HeartIcon, MenuIcon, SearchIcon, UserIcon } from "./Icons";
 import { Logo } from "./Logo";
 
 const nav = [
@@ -107,6 +107,9 @@ export function Header() {
           <Link to="/account/wishlist" className={`${iconBtn} hidden sm:flex`} aria-label={`Wishlist, ${wishlist.length} saved`}>
             <HeartIcon />
             {wishlist.length > 0 && <span className={badge}>{wishlist.length}</span>}
+          </Link>
+          <Link to="/account" className={`${iconBtn} hidden sm:flex`} aria-label="My account">
+            <UserIcon />
           </Link>
           <Link to="/cart" className={iconBtn} aria-label={`Cart, ${count} items`}>
             <BagIcon />
