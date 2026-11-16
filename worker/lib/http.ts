@@ -15,11 +15,11 @@ export function json(data: unknown, status = 200, headers: Record<string, string
 }
 
 /** Reads a small JSON object body. Rejects anything else. */
-export async function readJson(req: Request): Promise<Record<string, unknown>> {
+export async function readJson(req: Request, maxChars = 20_000): Promise<Record<string, unknown>> {
   const type = req.headers.get("content-type") ?? "";
   if (!type.includes("application/json")) throw new HttpError(415, "Send JSON.");
   const text = await req.text();
-  if (text.length > 20_000) throw new HttpError(413, "Request too large.");
+  if (text.length > maxChars) throw new HttpError(413, "Request too large.");
   let data: unknown;
   try {
     data = JSON.parse(text);

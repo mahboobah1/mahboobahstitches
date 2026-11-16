@@ -34,3 +34,42 @@ export function optionalPhone(v: unknown): string | null {
   if (!/^\+?[0-9 ()-]{7,20}$/.test(s)) return fail("Enter a valid phone number.");
   return s;
 }
+
+export const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+
+export function slugify(s: string): string {
+  return s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "").slice(0, 80);
+}
+
+export function slug(v: unknown, fallbackFrom: string): string {
+  const raw = typeof v === "string" && v.trim() ? v.trim().toLowerCase() : slugify(fallbackFrom);
+  if (!raw || raw.length > 80 || !SLUG_RE.test(raw)) return fail("Use letters, numbers and hyphens for the web address.");
+  return raw;
+}
+
+export function optText(v: unknown, label: string, max: number): string | null {
+  if (v === undefined || v === null || v === "") return null;
+  if (typeof v !== "string") return fail(`${label} is not valid.`);
+  const s = v.trim();
+  if (s.length > max) return fail(`${label} is too long.`);
+  return s || null;
+}
+
+export function int(v: unknown, label: string, min: number, max: number): number {
+  if (typeof v !== "number" || !Number.isInteger(v) || v < min || v > max) return fail(`${label} must be a whole number from ${min} to ${max}.`);
+  return v;
+}
+
+export function oneOf<T extends string>(v: unknown, label: string, allowed: readonly T[]): T {
+  if (typeof v !== "string" || !allowed.includes(v as T)) return fail(`${label} is not valid.`);
+  return v as T;
+}
+
+export function bool(v: unknown): boolean {
+  return v === true || v === 1;
+}
+
+export function id(v: unknown, label = "Item"): string {
+  if (typeof v !== "string" || !/^[A-Za-z0-9_-]{1,64}$/.test(v)) return fail(`${label} is not valid.`);
+  return v;
+}
