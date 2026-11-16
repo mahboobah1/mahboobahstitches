@@ -10,7 +10,7 @@ export class ApiError extends Error {
 const UNAVAILABLE = "Account services are not available on this address yet.";
 
 /** Calls the site's own backend (/api/...). Always returns data or throws ApiError with a readable message. */
-export async function api<T>(path: string, opts: { method?: "GET" | "POST"; body?: unknown } = {}): Promise<T> {
+export async function api<T>(path: string, opts: { method?: "GET" | "POST" | "PUT" | "DELETE"; body?: unknown } = {}): Promise<T> {
   let res: Response;
   try {
     res = await fetch(path, {
