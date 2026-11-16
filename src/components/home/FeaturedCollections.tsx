@@ -1,8 +1,10 @@
 import { Link } from "react-router-dom";
-import { collections } from "../../data/collections";
+import { useCatalogue } from "../../context/CatalogueContext";
 import { PlaceholderImage } from "../PlaceholderImage";
 
 export function FeaturedCollections() {
+  const { collections } = useCatalogue();
+  if (collections.length === 0) return null;
   return (
     <section className="section bg-cream-deep/60" aria-labelledby="collections-title">
       <div className="wrap">

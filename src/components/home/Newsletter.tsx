@@ -15,13 +15,13 @@ export function Newsletter() {
         </p>
         <a
           href={generalEnquiryLink("please add me to your updates about new styles.")}
-          target={hasWhatsapp ? "_blank" : undefined}
+          target={hasWhatsapp() ? "_blank" : undefined}
           rel="noopener noreferrer"
           className="btn-primary mt-6"
         >
           Join on WhatsApp
         </a>
-        {!hasWhatsapp && <p className="mt-3 text-xs text-royal/60">{site.name} will add a WhatsApp number soon.</p>}
+        {!hasWhatsapp() && <p className="mt-3 text-xs text-royal/60">{site.name} will add a WhatsApp number soon.</p>}
       </div>
     </section>
   );

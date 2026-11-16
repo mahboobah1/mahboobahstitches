@@ -1,9 +1,11 @@
 import { Link } from "react-router-dom";
-import { demoProducts } from "../../data/demo-products";
+import { useCatalogue } from "../../context/CatalogueContext";
 import { ProductGrid } from "../ProductGrid";
 
 export function GiftFeature() {
-  const gifts = demoProducts.filter((p) => p.collectionSlug === "combo-and-gift").slice(0, 2);
+  const { products } = useCatalogue();
+  const gifts = products.filter((p) => p.collectionSlug === "combo-and-gift").slice(0, 2);
+  if (gifts.length === 0) return null;
   return (
     <section className="section bg-royal text-cream" aria-labelledby="gift-title">
       <div className="wrap grid items-center gap-10 md:grid-cols-[0.9fr_1.1fr]">
