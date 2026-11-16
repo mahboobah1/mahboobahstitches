@@ -1,14 +1,13 @@
 /**
  * Business details. FILL THESE IN.
- * In Phase 7 these move to the admin Settings page (stored in the database),
- * so the owner can change them without editing code.
- * Anything left empty ("") is hidden or replaced with a safe fallback.
+ * These are only FALLBACKS. The real values are saved in Admin > Settings and loaded from the
+ * database when the site opens (see SiteContext). Anything empty is hidden or replaced safely.
  */
 export const site = {
   name: "Mahboobah Stitches",
   tagline: "Elegance in Every Thread.",
-  // Shows a "demo preview" notice in the top strip. Set to false before launch.
-  demoMode: true,
+  // Shows a "demo preview" notice in the top strip.
+  demoMode: false,
   announcement: "Welcome to Mahboobah Stitches.",
 
   // ---- CONTACT DETAILS: add yours here ----
@@ -41,4 +40,4 @@ export const site = {
   onlineCheckoutEnabled: boolean;
 };
 
-export const hasWhatsapp = site.whatsappNumber.replace(/\D/g, "").length >= 8;
+export const hasWhatsapp = (): boolean => site.whatsappNumber.replace(/\D/g, "").length >= 8;
