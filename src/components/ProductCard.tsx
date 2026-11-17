@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import type { Product } from "../data/types";
-import { formatMoney, fulfilmentLabel } from "../lib/format";
+import { fulfilmentLabel, priceLabel } from "../lib/format";
 import { useStore } from "../context/StoreContext";
 import { HeartIcon } from "./Icons";
 import { ProductImage } from "./ProductImage";
@@ -21,7 +21,7 @@ export function ProductCard({ product }: { product: Product }) {
         {fulfilmentLabel[product.type]}
         {!anyAvailable && " · Currently unavailable"}
       </p>
-      <p className="mt-0.5 text-sm font-medium">{product.variants.length > 1 ? `From ${formatMoney(from, product.variants[0].currency)}` : formatMoney(from, product.variants[0].currency)}</p>
+      <p className="mt-0.5 text-sm font-medium">{product.variants.length > 1 && from > 0 ? `From ${priceLabel(from, product.variants[0].currency)}` : priceLabel(from, product.variants[0].currency)}</p>
       <button
         type="button"
         onClick={() => toggleWishlist(product.slug)}

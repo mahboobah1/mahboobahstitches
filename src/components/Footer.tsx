@@ -6,7 +6,7 @@ import { Logo } from "./Logo";
 const ext = "link-line";
 
 export function Footer() {
-  const { collections } = useCatalogue();
+  const { visibleCollections: collections } = useCatalogue();
   const social = [
     { label: "Instagram", href: site.instagram },
     { label: "TikTok", href: site.tiktok },
