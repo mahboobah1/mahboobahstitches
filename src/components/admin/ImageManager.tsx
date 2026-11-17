@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import { api } from "../../lib/api";
 import { FormField } from "../FormField";
 import { Notice, errText, type Msg } from "./kit";
+import { ImagePicker, type Picked } from "./ImagePicker";
 
 export interface Img {
   id: string;
@@ -42,6 +43,23 @@ export function ImageManager({ productId, productName, images, onChanged }: { pr
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<Msg | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const [picking, setPicking] = useState(false);
+
+  const attach = async (p: Picked) => {
+    setPicking(false);
+    setBusy(true);
+    setMsg(null);
+    try {
+      await api(`/api/admin/products/${productId}/images`, { method: "POST", body: { url: p.url, alt: alt.trim() || p.alt || `${productName} photo ${images.length + 1}` } });
+      setAlt("");
+      setMsg({ ok: true, text: "Photo added." });
+      onChanged();
+    } catch (e) {
+      setMsg({ ok: false, text: errText(e) });
+    } finally {
+      setBusy(false);
+    }
+  };
 
   const upload = async (file: File | undefined) => {
     if (!file) return;
@@ -114,8 +132,12 @@ export function ImageManager({ productId, productName, images, onChanged }: { pr
       <div className="mt-5 max-w-md space-y-3">
         <FormField label="Description of the next photo" value={alt} onChange={(e) => setAlt(e.target.value)} maxLength={160} hint='For example: "Navy one-piece jilbab, front view".' />
         <input ref={fileRef} type="file" accept="image/*" className="sr-only" id="photo-input" onChange={(e) => upload(e.target.files?.[0])} />
-        <label htmlFor="photo-input" className={`btn-primary cursor-pointer ${busy ? "opacity-60" : ""}`}>{busy ? "Uploading…" : "Choose a photo"}</label>
+        <div className="flex flex-wrap gap-3">
+          <button type="button" className="btn-primary" onClick={() => setPicking(true)} disabled={busy}>Choose from library</button>
+          <label htmlFor="photo-input" className={`btn-ghost cursor-pointer ${busy ? "opacity-60" : ""}`}>{busy ? "Working…" : "Upload from phone"}</label>
+        </div>
         <Notice msg={msg} />
+        {picking && <ImagePicker onClose={() => setPicking(false)} onPick={(p) => void attach(p)} />}
       </div>
     </div>
   );
