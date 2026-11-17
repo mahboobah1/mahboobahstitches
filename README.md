@@ -3,7 +3,12 @@
 Modest fashion e-commerce: React + Vite + TypeScript + Tailwind on Cloudflare Pages,
 with a Cloudflare Workers / D1 backend arriving in later phases.
 
-## Status: Phase 3 (catalogue and content management)
+## Status: Phase 3b (photos, collections, photo library)
+Added: 19 products and a new Two-Piece Sets collection created from your photos; collection covers and homepage
+pictures; an admin photo picker that lists everything in `public/images/` (rebuilt on every deploy by
+`scripts/make-image-manifest.mjs`); "Price on request" products that send customers to WhatsApp.
+
+## Phase 3 (catalogue and content management)
 Added in Phase 3: product, variant, stock and photo management; collections and categories; a content editor
 for About, FAQ, Policies and Journal; business settings; staff roles. The storefront now shows only real data from
 the database. See `docs/ADMIN-GUIDE.md`.
