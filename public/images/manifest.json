@@ -1,0 +1,144 @@
+{
+ "images": [
+  {
+   "path": "/images/products/abaya-green-silver-trim-tassel.webp",
+   "name": "abaya-green-silver-trim-tassel",
+   "folder": "products",
+   "alt": "Green abaya with silver braided trim, beads and tassels on the sleeves",
+   "kb": 117
+  },
+  {
+   "path": "/images/products/abaya-mauve-satin-diagonal-trim.webp",
+   "name": "abaya-mauve-satin-diagonal-trim",
+   "folder": "products",
+   "alt": "Mauve satin abaya with matching scarf, diagonal black trim and gathered balloon cuffs",
+   "kb": 67
+  },
+  {
+   "path": "/images/products/abaya-pale-blue-button-front.webp",
+   "name": "abaya-pale-blue-button-front",
+   "folder": "products",
+   "alt": "Pale blue long abaya with dark buttons down the front and balloon sleeves, with a royal blue scarf",
+   "kb": 79
+  },
+  {
+   "path": "/images/products/abaya-sky-blue-black-ruffle-sleeve.webp",
+   "name": "abaya-sky-blue-black-ruffle-sleeve",
+   "folder": "products",
+   "alt": "Sky blue long abaya with wide black ruffled sleeves on a mannequin",
+   "kb": 54
+  },
+  {
+   "path": "/images/products/dress-beige-floral-trim.webp",
+   "name": "dress-beige-floral-trim",
+   "folder": "products",
+   "alt": "Beige long-sleeve dress with brown flower appliques at the neck and waist and a front zip",
+   "kb": 72
+  },
+  {
+   "path": "/images/products/dress-dusty-pink-pleated-cuff.webp",
+   "name": "dress-dusty-pink-pleated-cuff",
+   "folder": "products",
+   "alt": "Dusty pink long-sleeve flared dress with button detail and pleated cuffs on a mannequin",
+   "kb": 68
+  },
+  {
+   "path": "/images/products/dress-geometric-print-shirt.webp",
+   "name": "dress-geometric-print-shirt",
+   "folder": "products",
+   "alt": "Long shirt dress in a geometric print with black collar, pockets and belt",
+   "kb": 248
+  },
+  {
+   "path": "/images/products/dress-green-batik-sleeve.webp",
+   "name": "dress-green-batik-sleeve",
+   "folder": "products",
+   "alt": "Green button-front dress with white and green batik-print sleeves and side panels",
+   "kb": 106
+  },
+  {
+   "path": "/images/products/dress-yellow-zebra-print.webp",
+   "name": "dress-yellow-zebra-print",
+   "folder": "products",
+   "alt": "Yellow and black zebra-print dress with black lace trim at the neck and ruffled shoulders",
+   "kb": 190
+  },
+  {
+   "path": "/images/products/jilbab-caramel-beaded-cuff.webp",
+   "name": "jilbab-caramel-beaded-cuff",
+   "folder": "products",
+   "alt": "Caramel one-piece jilbab with attached hood and beaded cuff ties, shown on a mannequin",
+   "kb": 49
+  },
+  {
+   "path": "/images/products/jilbab-emerald-button-cuff.webp",
+   "name": "jilbab-emerald-button-cuff",
+   "folder": "products",
+   "alt": "Emerald green one-piece jilbab with attached hood and silver buttons on the cuffs",
+   "kb": 66
+  },
+  {
+   "path": "/images/products/jilbab-lilac-ruffle-cuff.webp",
+   "name": "jilbab-lilac-ruffle-cuff",
+   "folder": "products",
+   "alt": "Lilac one-piece jilbab with attached hood and ruffled cuffs on a mannequin",
+   "kb": 50
+  },
+  {
+   "path": "/images/products/jilbab-navy-ruffle-cuff.webp",
+   "name": "jilbab-navy-ruffle-cuff",
+   "folder": "products",
+   "alt": "Navy blue one-piece jilbab with attached hood and gathered ruffle cuffs",
+   "kb": 48
+  },
+  {
+   "path": "/images/products/jilbab-tan-pleated-cuff.webp",
+   "name": "jilbab-tan-pleated-cuff",
+   "folder": "products",
+   "alt": "Tan one-piece jilbab with attached hood and pleated cuffs on a mannequin",
+   "kb": 50
+  },
+  {
+   "path": "/images/products/jilbab-teal-button-cuff.webp",
+   "name": "jilbab-teal-button-cuff",
+   "folder": "products",
+   "alt": "Teal one-piece jilbab with attached hood and silver buttons on pleated cuffs",
+   "kb": 53
+  },
+  {
+   "path": "/images/products/set-pink-slit-top-skirt.webp",
+   "name": "set-pink-slit-top-skirt",
+   "folder": "products",
+   "alt": "Pink long-sleeve fitted top with front slit and a matching flared skirt",
+   "kb": 54
+  },
+  {
+   "path": "/images/products/set-purple-fringe-trim.webp",
+   "name": "set-purple-fringe-trim",
+   "folder": "products",
+   "alt": "Purple flared top with lilac fringe trim worn over a matching long skirt",
+   "kb": 77
+  },
+  {
+   "path": "/images/products/two-piece-mustard-khimar-skirt.webp",
+   "name": "two-piece-mustard-khimar-skirt",
+   "folder": "products",
+   "alt": "Mustard two-piece set of a long pointed khimar with button cuffs and a matching skirt",
+   "kb": 59
+  },
+  {
+   "path": "/images/products/two-piece-navy-khimar-gold-button-1.webp",
+   "name": "two-piece-navy-khimar-gold-button-1",
+   "folder": "products",
+   "alt": "Navy two-piece khimar and skirt set with gold buttons, front view",
+   "kb": 53
+  },
+  {
+   "path": "/images/products/two-piece-navy-khimar-gold-button-2.webp",
+   "name": "two-piece-navy-khimar-gold-button-2",
+   "folder": "products",
+   "alt": "Navy two-piece khimar and skirt set with gold buttons, angled view",
+   "kb": 53
+  }
+ ]
+}
