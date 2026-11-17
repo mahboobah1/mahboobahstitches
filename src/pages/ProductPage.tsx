@@ -5,7 +5,7 @@ import { PlaceholderImage } from "../components/PlaceholderImage";
 import { ProductGrid } from "../components/ProductGrid";
 import { useCatalogue } from "../context/CatalogueContext";
 import { useStore } from "../context/StoreContext";
-import { formatMoney, fulfilmentLabel } from "../lib/format";
+import { fulfilmentLabel, isOnRequest, priceLabel } from "../lib/format";
 import { usePageMeta } from "../lib/usePageMeta";
 import { productEnquiryLink } from "../lib/whatsapp";
 import NotFoundPage from "./NotFoundPage";
@@ -39,6 +39,7 @@ export default function ProductPage() {
   const prices = product.variants.map((v) => v.priceMinor);
   const currency = product.variants[0].currency;
   const image = product.images[Math.min(shot, product.images.length - 1)];
+  const onRequest = isOnRequest((chosen ?? product.variants[0]).priceMinor);
 
   const optionAvailable = (s: string, c: string) =>
     product.variants.some((v) => v.available && (!s || v.size === s) && (!c || v.colour === c));
@@ -89,10 +90,10 @@ export default function ProductPage() {
           <h1 className="text-4xl sm:text-5xl">{product.name}</h1>
           <p className="mt-3 text-lg font-medium">
             {chosen
-              ? formatMoney(chosen.priceMinor, chosen.currency)
+              ? priceLabel(chosen.priceMinor, chosen.currency)
               : Math.min(...prices) === Math.max(...prices)
-                ? formatMoney(prices[0], currency)
-                : `From ${formatMoney(Math.min(...prices), currency)}`}
+                ? priceLabel(prices[0], currency)
+                : `From ${priceLabel(Math.min(...prices), currency)}`}
           </p>
           <p className="mt-1 text-sm text-royal/75">
             {fulfilmentLabel[product.type]}{product.subcategory && ` · ${product.subcategory}`}{chosen && ` · Ref ${chosen.sku}`}
@@ -123,15 +124,23 @@ export default function ProductPage() {
           )}
 
           <div className="mt-7 flex flex-wrap gap-3">
-            <button type="button" onClick={handleAdd} className="btn-primary flex-1 sm:flex-none">Add to cart</button>
+            {onRequest ? (
+              <a href={productEnquiryLink(product, chosen, true)} target="_blank" rel="noopener noreferrer" className="btn-primary flex-1 gap-2 sm:flex-none">
+                <WhatsAppIcon className="h-5 w-5" /> Ask for the price on WhatsApp
+              </a>
+            ) : (
+              <button type="button" onClick={handleAdd} className="btn-primary flex-1 sm:flex-none">Add to cart</button>
+            )}
             <button type="button" onClick={() => toggleWishlist(product.slug)} aria-pressed={inWishlist(product.slug)} className="btn-ghost gap-2">
               <HeartIcon filled={inWishlist(product.slug)} className="h-5 w-5" />
               {inWishlist(product.slug) ? "Saved" : "Save"}
             </button>
           </div>
-          <a href={productEnquiryLink(product, chosen)} target="_blank" rel="noopener noreferrer" className="btn-ghost mt-3 w-full gap-2 sm:w-auto">
-            <WhatsAppIcon className="h-5 w-5" /> Ask about this on WhatsApp
-          </a>
+          {!onRequest && (
+            <a href={productEnquiryLink(product, chosen)} target="_blank" rel="noopener noreferrer" className="btn-ghost mt-3 w-full gap-2 sm:w-auto">
+              <WhatsAppIcon className="h-5 w-5" /> Ask about this on WhatsApp
+            </a>
+          )}
 
           <p role="status" aria-live="polite" className={`mt-4 min-h-[1.5rem] text-sm ${notice && !notice.ok ? "text-[#9b2c2c]" : ""}`}>
             {notice?.text}

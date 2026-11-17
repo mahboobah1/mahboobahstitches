@@ -28,7 +28,11 @@ export default function HomePage() {
           </div>
         </section>
       )}
-      <ProductRail id="new-title" title="New arrivals" products={fresh} to="/shop?sort=newest" />
+      {fresh.length > 0 ? (
+        <ProductRail id="new-title" title="New arrivals" products={fresh} to="/shop?sort=newest" />
+      ) : (
+        <ProductRail id="pieces-title" title="Our pieces" products={products.slice(0, 4)} to="/shop" />
+      )}
       <ProductRail id="best-title" title="Bestsellers" products={best} to="/shop" />
       <GiftFeature />
       <BespokeIntro />

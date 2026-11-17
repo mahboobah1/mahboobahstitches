@@ -14,6 +14,7 @@ export default function CollectionPage() {
   if (!collection) return <NotFoundPage />;
 
   const sub = params.get("sub") ?? "";
+  const subs = [...new Set(products.filter((p) => p.collectionSlug === slug).map((p) => p.subcategory).filter(Boolean))];
   const items = products.filter(
     (p) => p.collectionSlug === slug && (!sub || p.subcategory === sub),
   );
@@ -26,6 +27,7 @@ export default function CollectionPage() {
       <h1 className="mt-3 text-4xl sm:text-5xl">{collection.name}</h1>
       <p className="mt-3 max-w-xl text-lg text-royal/80">{collection.blurb}</p>
 
+      {subs.length > 1 && (
       <div className="mt-7 flex flex-wrap gap-2" role="group" aria-label="Subcategories">
         <button
           type="button"
@@ -35,7 +37,7 @@ export default function CollectionPage() {
         >
           All
         </button>
-        {collection.subcategories.map((s) => (
+        {subs.length > 1 && subs.map((s) => (
           <button
             key={s}
             type="button"
@@ -47,6 +49,7 @@ export default function CollectionPage() {
           </button>
         ))}
       </div>
+      )}
 
       <div className="mt-9">
         {items.length > 0 ? (

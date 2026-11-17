@@ -29,7 +29,7 @@ export function filterProducts(
 
 export default function ShopPage() {
   usePageMeta("Shop", "Browse all modest fashion, prayer wear and gifts.");
-  const { collections, products, status } = useCatalogue();
+  const { visibleCollections: collections, products, status } = useCatalogue();
   const [params, setParams] = useSearchParams();
   const q = params.get("q") ?? "";
   const collection = params.get("collection") ?? "";
