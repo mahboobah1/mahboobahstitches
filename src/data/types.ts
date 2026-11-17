@@ -38,6 +38,9 @@ export interface Collection {
   slug: string;
   name: string;
   blurb: string;
+  imageUrl: string;
+  /** Live products in this collection. Collections with 0 are hidden from the website lists. */
+  productCount: number;
   subcategories: string[];
 }
 
