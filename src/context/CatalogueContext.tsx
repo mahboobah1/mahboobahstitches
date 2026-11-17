@@ -7,6 +7,8 @@ type Status = "loading" | "ready" | "error";
 interface CatalogueValue {
   status: Status;
   collections: Collection[];
+  /** Only collections that currently have at least one live product. */
+  visibleCollections: Collection[];
   products: Product[];
   getProduct: (slug: string) => Product | undefined;
   getCollection: (slug: string) => Collection | undefined;
@@ -49,9 +51,10 @@ export function CatalogueProvider({ children }: { children: ReactNode }) {
     [products],
   );
 
+  const visibleCollections = useMemo(() => collections.filter((c) => c.productCount > 0), [collections]);
   const value = useMemo(
-    () => ({ status, collections, products, getProduct, getCollection, getVariant }),
-    [status, collections, products, getProduct, getCollection, getVariant],
+    () => ({ status, collections, visibleCollections, products, getProduct, getCollection, getVariant }),
+    [status, collections, visibleCollections, products, getProduct, getCollection, getVariant],
   );
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

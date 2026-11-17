@@ -55,6 +55,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     const found = getVariant(variantId);
     if (!found) return { ok: false, message: "That item could not be found." };
     if (!found.variant.available) return { ok: false, message: "That size and colour is unavailable." };
+    if (found.variant.priceMinor === 0) return { ok: false, message: "Please ask for the price on WhatsApp." };
     setItems((prev) => {
       const existing = prev.find((p) => p.variantId === variantId);
       if (existing) {

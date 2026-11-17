@@ -14,6 +14,8 @@ interface PublicSite {
   openingHours: string;
   announcement: string;
   demoMode: boolean;
+  heroImage: string;
+  bespokeImage: string;
 }
 
 /**
@@ -45,6 +47,8 @@ export function SiteProvider({ children }: { children: ReactNode }) {
         site.openingHours = s.openingHours;
         site.announcement = s.announcement;
         site.demoMode = s.demoMode;
+        site.heroImage = s.heroImage ?? "";
+        site.bespokeImage = s.bespokeImage ?? "";
       })
       .catch(() => undefined)
       .finally(() => {
