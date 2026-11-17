@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { site } from "../../config/site";
 
 const steps = [
   "Tell us the outfit, fabric, colour and your measurements.",
@@ -24,6 +25,11 @@ export function BespokeIntro() {
             </Link>
           </div>
         </div>
+        <div>
+        {site.bespokeImage && (
+          <img src={site.bespokeImage} alt="A custom-tailored dress by Mahboobah Stitches" width={1200} height={1500} loading="lazy" decoding="async"
+            className="mb-8 aspect-[4/3] w-full bg-cream-deep object-cover object-[50%_20%]" />
+        )}
         {/* A real sequence, so numbering is meaningful here. */}
         <ol className="space-y-0 border-l border-dashed border-gold pl-6">
           {steps.map((s, i) => (
@@ -35,6 +41,7 @@ export function BespokeIntro() {
             </li>
           ))}
         </ol>
+        </div>
       </div>
     </section>
   );

@@ -3,7 +3,7 @@ import { useCatalogue } from "../../context/CatalogueContext";
 import { PlaceholderImage } from "../PlaceholderImage";
 
 export function FeaturedCollections() {
-  const { collections } = useCatalogue();
+  const { visibleCollections: collections } = useCatalogue();
   if (collections.length === 0) return null;
   return (
     <section className="section bg-cream-deep/60" aria-labelledby="collections-title">
@@ -18,7 +18,11 @@ export function FeaturedCollections() {
           {collections.map((c, i) => (
             <li key={c.slug} className={i % 2 === 1 ? "md:mt-10" : ""}>
               <Link to={`/collections/${c.slug}`} className="group block">
-                <PlaceholderImage label={c.name} tone={i % 3 === 2 ? "royal" : "powder"} className="arch aspect-[3/4] w-full" showLabel={false} />
+                {c.imageUrl ? (
+                  <img src={c.imageUrl} alt={`${c.name}: a sample piece`} width={1200} height={1500} loading="lazy" decoding="async" className="arch aspect-[3/4] w-full bg-powder object-cover object-bottom" />
+                ) : (
+                  <PlaceholderImage label={c.name} tone={i % 3 === 2 ? "royal" : "powder"} className="arch aspect-[3/4] w-full" showLabel={false} />
+                )}
                 <h3 className="mt-3">{c.name}</h3>
                 <p className="mt-1 hidden text-sm text-royal/75 sm:block">{c.blurb}</p>
               </Link>

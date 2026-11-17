@@ -38,7 +38,19 @@ export function Hero() {
 
         <div className="mx-auto w-full max-w-sm md:max-w-none">
           <div className="stitch-frame arch">
-            <PlaceholderImage label="Hero photograph" tone="cream" className="arch aspect-[4/5] w-full" />
+            {site.heroImage ? (
+              <img
+                src={site.heroImage}
+                alt="A Mahboobah Stitches outfit on a mannequin"
+                width={1200}
+                height={1500}
+                loading="eager"
+                decoding="async"
+                className="arch aspect-[4/5] w-full bg-cream object-cover object-bottom"
+              />
+            ) : (
+              <PlaceholderImage label="Hero photograph" tone="cream" className="arch aspect-[4/5] w-full" />
+            )}
           </div>
         </div>
       </div>
