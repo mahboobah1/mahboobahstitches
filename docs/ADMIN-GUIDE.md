@@ -11,6 +11,20 @@ Open `/admin` on your site and sign in. Everything below is done from your phone
 
 A live product only shows on the shop if it has at least one option.
 
+## Photos: the library
+- Photos you upload to `public/images/` on GitHub form your **website library**. After each deploy, every photo in that folder
+  appears in the admin photo picker (the list is rebuilt automatically). Photos you upload from your phone through a product page
+  appear under **Phone uploads**.
+- **On a product:** Products > the product > Photos > **Choose from library** (or **Upload from phone**).
+- **Collection cover:** Collections > the collection > **Cover picture** > Choose a photo > Save collection.
+- **Homepage pictures:** Settings > Homepage pictures (the main picture at the top, and the one beside the custom-orders section).
+- A collection with no live products is hidden from customers until it has some, so the website only shows what you have.
+
+## Products that show "Price on request"
+The photos were set up as live products with a price of 0. The website shows "Price on request" and a WhatsApp button
+instead of Add to cart. To start selling one: Admin > Products > open it > set the option's real price (and size, colour, stock).
+Products still at 0 show a "Needs a price" tag in the product list. To hide a product, set its Status to Draft.
+
 ## Stock
 - Admin > **Inventory**: tap any row to add stock, remove stock, or enter a counted total. Every change is recorded with your name and the reason.
 - An option with zero stock shows as unavailable on the shop automatically.
