@@ -45,6 +45,7 @@ const routes: [string, string, Handler][] = [
   ["GET", "/api/admin/variants/:id/movements", cat.movements],
   ["GET", "/api/admin/inventory", (e, r) => cat.listInventory(e, r)],
   ["POST", "/api/admin/media", (e, r) => cat.uploadMedia(e, r)],
+  ["GET", "/api/admin/media", (e, r) => cat.listMedia(e, r)],
   ["PUT", "/api/admin/images/:id", cat.updateImage],
   ["DELETE", "/api/admin/images/:id", cat.deleteImage],
   ["GET", "/api/admin/pages", (e, r) => cms.listPages(e, r)],
