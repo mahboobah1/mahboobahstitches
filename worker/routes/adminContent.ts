@@ -77,7 +77,7 @@ export async function deletePage(env: Env, req: Request, p: Params): Promise<Res
 
 /* ---------------- business settings ---------------- */
 
-const SETTING_KEYS = ["whatsappNumber", "phone", "email", "instagram", "tiktok", "facebook", "address", "openingHours", "announcement", "demoMode"] as const;
+const SETTING_KEYS = ["whatsappNumber", "phone", "email", "instagram", "tiktok", "facebook", "address", "openingHours", "announcement", "demoMode", "heroImage", "bespokeImage"] as const;
 
 export async function getSettings(env: Env, req: Request): Promise<Response> {
   await guard(env, req, "settings:write");
@@ -115,6 +115,8 @@ export async function saveSettings(env: Env, req: Request): Promise<Response> {
     openingHours: v.optText(b.openingHours, "Opening hours", 120) ?? "",
     announcement: v.optText(b.announcement, "Announcement", 160) ?? "",
     demoMode: v.bool(b.demoMode) ? "1" : "0",
+    heroImage: v.imagePath(b.heroImage, "Homepage picture") ?? "",
+    bespokeImage: v.imagePath(b.bespokeImage, "Bespoke picture") ?? "",
   };
   await env.DB.batch(
     SETTING_KEYS.map((k) =>

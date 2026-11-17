@@ -25,7 +25,7 @@ const uniqueGuard = async <T>(fn: () => Promise<T>, msg: string): Promise<T> => 
 export async function listCollections(env: Env, req: Request): Promise<Response> {
   await guard(env, req, "products:write");
   const [cols, cats] = await Promise.all([
-    env.DB.prepare("SELECT id, slug, name, blurb, sort_order AS sortOrder, is_active AS isActive FROM collections ORDER BY sort_order, name").all(),
+    env.DB.prepare("SELECT id, slug, name, blurb, image_url AS imageUrl, sort_order AS sortOrder, is_active AS isActive FROM collections ORDER BY sort_order, name").all(),
     env.DB.prepare("SELECT id, collection_id AS collectionId, slug, name, sort_order AS sortOrder FROM categories ORDER BY sort_order, name").all(),
   ]);
   return json({ collections: cols.results, categories: cats.results });
@@ -38,7 +38,7 @@ export async function createCollection(env: Env, req: Request): Promise<Response
   const slug = v.slug(b.slug, name);
   const id = `col_${crypto.randomUUID().slice(0, 8)}`;
   await uniqueGuard(
-    () => env.DB.prepare("INSERT INTO collections (id, slug, name, blurb, sort_order) VALUES (?1,?2,?3,?4,(SELECT COALESCE(MAX(sort_order),0)+1 FROM collections))").bind(id, slug, name, v.optText(b.blurb, "Description", 300)).run(),
+    () => env.DB.prepare("INSERT INTO collections (id, slug, name, blurb, image_url, sort_order) VALUES (?1,?2,?3,?4,?5,(SELECT COALESCE(MAX(sort_order),0)+1 FROM collections))").bind(id, slug, name, v.optText(b.blurb, "Description", 300), v.imagePath(b.imageUrl, "Cover picture")).run(),
     "That web address is already used.",
   );
   await audit(env, { actor: user.id, action: "collection.create", entity: "collection", entityId: id, ip: ip(req) });
@@ -50,8 +50,8 @@ export async function updateCollection(env: Env, req: Request, p: Params): Promi
   const user = await guard(env, req, "products:write");
   const b = await readJson(req);
   const id = v.id(p.id);
-  const res = await env.DB.prepare("UPDATE collections SET name=?2, blurb=?3, sort_order=?4, is_active=?5 WHERE id=?1")
-    .bind(id, v.text(b.name, "Name", 2, 80), v.optText(b.blurb, "Description", 300), v.int(b.sortOrder, "Order", 0, 1000), v.bool(b.isActive) ? 1 : 0).run();
+  const res = await env.DB.prepare("UPDATE collections SET name=?2, blurb=?3, sort_order=?4, is_active=?5, image_url=?6 WHERE id=?1")
+    .bind(id, v.text(b.name, "Name", 2, 80), v.optText(b.blurb, "Description", 300), v.int(b.sortOrder, "Order", 0, 1000), v.bool(b.isActive) ? 1 : 0, v.imagePath(b.imageUrl, "Cover picture")).run();
   if (!res.meta.changes) throw new HttpError(404, "Collection not found.");
   await audit(env, { actor: user.id, action: "collection.update", entity: "collection", entityId: id, ip: ip(req) });
   await rebuildSnapshot(env);
@@ -101,7 +101,8 @@ export async function listProducts(env: Env, req: Request): Promise<Response> {
   const rows = await env.DB.prepare(
     `SELECT p.id, p.slug, p.name, p.status, p.product_type AS type, c.name AS collectionName,
             (SELECT COUNT(*) FROM product_variants x WHERE x.product_id = p.id) AS variantCount,
-            (SELECT COUNT(*) FROM product_images i WHERE i.product_id = p.id) AS imageCount
+            (SELECT COUNT(*) FROM product_images i WHERE i.product_id = p.id) AS imageCount,
+            (SELECT MIN(price_minor) FROM product_variants x WHERE x.product_id = p.id) AS minPrice
        FROM products p JOIN collections c ON c.id = p.collection_id
       WHERE (?1 = '' OR lower(p.name) LIKE '%' || ?1 || '%') ORDER BY p.created_at DESC, p.rowid DESC LIMIT 200`,
   ).bind(q).all();
@@ -303,12 +304,22 @@ export async function addImage(env: Env, req: Request, p: Params): Promise<Respo
   const user = await guard(env, req, "products:write");
   const productId = v.id(p.id);
   const b = await readJson(req);
-  const mediaId = v.id(b.mediaId, "Image");
-  if (!(await env.DB.prepare("SELECT 1 AS x FROM media WHERE id=?1").bind(mediaId).first())) throw new HttpError(404, "Upload the image first.");
+  // Either a photo from the website library ("url") or one uploaded from the phone ("mediaId").
+  let url: string;
+  if (b.mediaId) {
+    const mediaId = v.id(b.mediaId, "Image");
+    if (!(await env.DB.prepare("SELECT 1 AS x FROM media WHERE id=?1").bind(mediaId).first())) throw new HttpError(404, "Upload the image first.");
+    url = `/api/media/${mediaId}`;
+  } else {
+    const lib = v.imagePath(b.url, "Photo");
+    if (!lib) throw new HttpError(422, "Choose a photo.");
+    url = lib;
+  }
+  if (!(await env.DB.prepare("SELECT 1 AS x FROM products WHERE id=?1").bind(productId).first())) throw new HttpError(404, "Product not found.");
   const id = crypto.randomUUID();
   await env.DB.prepare(
     "INSERT INTO product_images (id, product_id, url, alt_text, sort_order) VALUES (?1,?2,?3,?4,(SELECT COALESCE(MAX(sort_order),0)+1 FROM product_images WHERE product_id=?2))",
-  ).bind(id, productId, `/api/media/${mediaId}`, v.text(b.alt, "Image description", 3, 160)).run();
+  ).bind(id, productId, url, v.text(b.alt, "Image description", 3, 160)).run();
   await audit(env, { actor: user.id, action: "image.add", entity: "product", entityId: productId, ip: ip(req) });
   await rebuildSnapshot(env);
   return json({ id }, 201);
@@ -330,9 +341,12 @@ export async function deleteImage(env: Env, req: Request, p: Params): Promise<Re
   const row = await env.DB.prepare("SELECT url FROM product_images WHERE id=?1").bind(id).first<{ url: string }>();
   if (!row) throw new HttpError(404, "Image not found.");
   await env.DB.prepare("DELETE FROM product_images WHERE id=?1").bind(id).run();
-  const mediaId = row.url.replace("/api/media/", "");
-  // Remove the stored file too, unless another product image still uses it.
-  await env.DB.prepare("DELETE FROM media WHERE id=?1 AND NOT EXISTS (SELECT 1 FROM product_images WHERE url=?2)").bind(mediaId, row.url).run();
+  if (row.url.startsWith("/api/media/")) {
+    // Remove the stored upload too, unless another product image or collection cover still uses it.
+    await env.DB.prepare(
+      "DELETE FROM media WHERE id=?1 AND NOT EXISTS (SELECT 1 FROM product_images WHERE url=?2) AND NOT EXISTS (SELECT 1 FROM collections WHERE image_url=?2)",
+    ).bind(row.url.slice("/api/media/".length), row.url).run();
+  }
   await audit(env, { actor: user.id, action: "image.delete", entity: "image", entityId: id, ip: ip(req) });
   await rebuildSnapshot(env);
   return json({ ok: true });
@@ -348,4 +362,11 @@ export async function reorderImages(env: Env, req: Request, p: Params): Promise<
   await audit(env, { actor: user.id, action: "image.reorder", entity: "product", entityId: productId, ip: ip(req) });
   await rebuildSnapshot(env);
   return json({ ok: true });
+}
+
+/** Uploaded photos (from the phone), newest first, for the photo picker. Website-library photos come from /images/manifest.json. */
+export async function listMedia(env: Env, req: Request): Promise<Response> {
+  await guard(env, req, "products:write", "content:write", "settings:write");
+  const rows = await env.DB.prepare("SELECT id, bytes, created_at AS createdAt FROM media ORDER BY created_at DESC, rowid DESC LIMIT 100").all<{ id: string; bytes: number; createdAt: number }>();
+  return json({ items: rows.results.map((r) => ({ ...r, url: `/api/media/${r.id}` })) });
 }

@@ -10,7 +10,7 @@ export async function catalogue(env: Env): Promise<Response> {
   return new Response(body, { headers: { "content-type": "application/json; charset=utf-8", "cache-control": "public, max-age=30" } });
 }
 
-const SITE_FIELDS = ["whatsappNumber", "phone", "email", "instagram", "tiktok", "facebook", "address", "openingHours", "announcement", "demoMode"] as const;
+const SITE_FIELDS = ["whatsappNumber", "phone", "email", "instagram", "tiktok", "facebook", "address", "openingHours", "announcement", "demoMode", "heroImage", "bespokeImage"] as const;
 
 export async function siteSettings(env: Env): Promise<Response> {
   const rows = await env.DB.prepare("SELECT key, value FROM settings WHERE key LIKE 'site.%'").all<{ key: string; value: string }>();
