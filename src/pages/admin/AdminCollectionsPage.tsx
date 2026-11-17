@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
 import { CheckField, Notice, errText, type Msg } from "../../components/admin/kit";
 import { FormField } from "../../components/FormField";
+import { PictureField } from "../../components/admin/ImagePicker";
 import { api } from "../../lib/api";
 import { usePageMeta } from "../../lib/usePageMeta";
 
-interface Col { id: string; slug: string; name: string; blurb: string | null; sortOrder: number; isActive: number }
+interface Col { id: string; slug: string; name: string; blurb: string | null; imageUrl: string | null; sortOrder: number; isActive: number }
 interface Cat { id: string; collectionId: string; name: string; sortOrder: number }
 
 export default function AdminCollectionsPage() {
@@ -35,7 +36,7 @@ export default function AdminCollectionsPage() {
   return (
     <>
       <h1 className="text-4xl">Collections and categories</h1>
-      <p className="mt-2 max-w-xl text-sm text-royal/75">Collections are the main groups on your shop. Categories sit inside them. Hide a collection to remove it from the shop without deleting anything.</p>
+      <p className="mt-2 max-w-xl text-sm text-royal/75">Collections are the main groups on your shop. Categories sit inside them. Hide a collection to remove it from the shop without deleting anything. A collection with no live products is not shown to customers until it has some.</p>
       {error && <p role="alert" className="mt-4 text-[#9b2c2c]">{error}</p>}
       {!cols && !error && <p className="mt-6" role="status">Loading…</p>}
       <ul className="mt-8 space-y-8">
@@ -58,13 +59,14 @@ function CollectionCard({ col, cats, onChanged }: { col: Col; cats: Cat[]; onCha
   const [blurb, setBlurb] = useState(col.blurb ?? "");
   const [order, setOrder] = useState(String(col.sortOrder));
   const [active, setActive] = useState(col.isActive === 1);
+  const [cover, setCover] = useState(col.imageUrl ?? "");
   const [newCat, setNewCat] = useState("");
   const [msg, setMsg] = useState<Msg | null>(null);
 
   const save = async () => {
     setMsg(null);
     try {
-      await api(`/api/admin/collections/${col.id}`, { method: "PUT", body: { name, blurb, sortOrder: Number(order), isActive: active } });
+      await api(`/api/admin/collections/${col.id}`, { method: "PUT", body: { name, blurb, sortOrder: Number(order), isActive: active, imageUrl: cover } });
       setMsg({ ok: true, text: "Saved." });
       onChanged();
     } catch (e) { setMsg({ ok: false, text: errText(e) }); }
@@ -85,6 +87,7 @@ function CollectionCard({ col, cats, onChanged }: { col: Col; cats: Cat[]; onCha
         <FormField label="Order on shop" type="number" inputMode="numeric" min={0} value={order} onChange={(e) => setOrder(e.target.value)} />
       </div>
       <div className="mt-3"><FormField label="Short description" value={blurb} onChange={(e) => setBlurb(e.target.value)} maxLength={300} /></div>
+      <div className="mt-3"><PictureField label="Cover picture" value={cover} onChange={setCover} hint="Shown on the homepage and the Collections page. Save the collection after changing it." /></div>
       <CheckField label="Show on the shop" checked={active} onChange={(e) => setActive(e.target.checked)} />
       <div className="flex items-center gap-4">
         <button type="button" className="btn-primary" onClick={save}>Save collection</button>

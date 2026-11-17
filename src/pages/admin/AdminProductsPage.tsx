@@ -15,6 +15,7 @@ interface Row {
   collectionName: string;
   variantCount: number;
   imageCount: number;
+  minPrice: number | null;
 }
 
 export default function AdminProductsPage() {
@@ -49,6 +50,7 @@ export default function AdminProductsPage() {
               <span className="font-display text-xl">{r.name}</span>
               <span className="mt-1 flex flex-wrap items-center gap-2 text-sm text-royal/75">
                 <Badge tone={r.status === "active" ? "good" : r.status === "draft" ? "warn" : "plain"}>{r.status === "active" ? "Live" : r.status === "draft" ? "Draft" : "Archived"}</Badge>
+                {r.minPrice === 0 && <Badge tone="warn">Needs a price</Badge>}
                 {r.collectionName} · {fulfilmentLabel[r.type]} · {r.variantCount} {r.variantCount === 1 ? "option" : "options"} · {r.imageCount} {r.imageCount === 1 ? "photo" : "photos"}
               </span>
             </Link>

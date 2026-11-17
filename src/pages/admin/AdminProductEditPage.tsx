@@ -131,7 +131,7 @@ export default function AdminProductEditPage() {
         <>
           <section className="mt-14" aria-labelledby="variants-h">
             <h2 id="variants-h">Sizes, colours, prices and stock</h2>
-            <p className="mt-2 max-w-xl text-sm text-royal/75">Each combination is one option with its own price, SKU and stock. Leave size or colour empty if a product has only one.</p>
+            <p className="mt-2 max-w-xl text-sm text-royal/75">Each combination is one option with its own price, SKU and stock. Leave size or colour empty if a product has only one. A price of 0 shows on the website as “Price on request”: customers are sent to WhatsApp and cannot add it to the cart.</p>
             <ul className="mt-6 space-y-5">
               {variants.map((v) => <VariantCard key={v.id} v={v} onSaved={load} />)}
             </ul>

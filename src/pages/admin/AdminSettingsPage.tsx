@@ -1,12 +1,13 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { CheckField, Notice, errText, type Msg } from "../../components/admin/kit";
 import { FormField } from "../../components/FormField";
+import { PictureField } from "../../components/admin/ImagePicker";
 import { api } from "../../lib/api";
 import { usePageMeta } from "../../lib/usePageMeta";
 
 type S = {
   whatsappNumber: string; phone: string; email: string; instagram: string; tiktok: string; facebook: string;
-  address: string; openingHours: string; announcement: string; demoMode: boolean;
+  address: string; openingHours: string; announcement: string; demoMode: boolean; heroImage: string; bespokeImage: string;
 };
 
 export default function AdminSettingsPage() {
@@ -41,6 +42,10 @@ export default function AdminSettingsPage() {
       <h1 className="text-4xl">Business settings</h1>
       <p className="mt-2 max-w-xl text-sm text-royal/75">These appear in the website header, footer, Contact page and WhatsApp buttons.</p>
       <form onSubmit={save} className="mt-8 max-w-2xl space-y-5" noValidate>
+        <h2 className="!text-2xl">Homepage pictures</h2>
+        <PictureField label="Main picture at the top of the homepage" value={s.heroImage} onChange={(u) => set("heroImage", u)} />
+        <PictureField label="Picture beside the custom-orders section" value={s.bespokeImage} onChange={(u) => set("bespokeImage", u)} />
+        <h2 className="!text-2xl pt-4">Contact and business details</h2>
         <FormField label="WhatsApp number" inputMode="tel" value={s.whatsappNumber} onChange={(e) => set("whatsappNumber", e.target.value)} hint="With country code, e.g. 2348012345678. This powers every WhatsApp button." />
         <FormField label="Phone number" inputMode="tel" value={s.phone} onChange={(e) => set("phone", e.target.value)} />
         <FormField label="Email" type="email" value={s.email} onChange={(e) => set("email", e.target.value)} />
