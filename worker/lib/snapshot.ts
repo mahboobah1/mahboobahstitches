@@ -12,7 +12,7 @@ interface VRow { id: string; product_id: string; sku: string; size: string; colo
 
 export async function buildCatalogue(env: Env): Promise<string> {
   const [cols, cats, prods, vars, imgs] = await Promise.all([
-    env.DB.prepare("SELECT id, slug, name, blurb FROM collections WHERE is_active = 1 ORDER BY sort_order, name").all<{ id: string; slug: string; name: string; blurb: string | null }>(),
+    env.DB.prepare("SELECT id, slug, name, blurb, image_url FROM collections WHERE is_active = 1 ORDER BY sort_order, name").all<{ id: string; slug: string; name: string; blurb: string | null; image_url: string | null }>(),
     env.DB.prepare("SELECT c.slug AS collection_slug, cat.slug, cat.name FROM categories cat JOIN collections c ON c.id = cat.collection_id WHERE c.is_active = 1 ORDER BY cat.sort_order, cat.name").all<{ collection_slug: string; slug: string; name: string }>(),
     env.DB.prepare(
       `SELECT p.id, p.slug, p.name, p.description, p.product_type, p.is_new, p.is_bestseller, p.fulfilment_info, p.shipping_info,
@@ -47,20 +47,24 @@ export async function buildCatalogue(env: Env): Promise<string> {
     imagesBy.set(im.product_id, list);
   }
 
-  return JSON.stringify({
-    generatedAt: Math.floor(Date.now() / 1000),
-    collections: cols.results.map((c) => ({
-      slug: c.slug, name: c.name, blurb: c.blurb ?? "",
-      subcategories: cats.results.filter((x) => x.collection_slug === c.slug).map((x) => x.name),
-    })),
-    products: prods.results
+  const products = prods.results
       .map((p) => ({
         id: p.id, slug: p.slug, name: p.name, description: p.description ?? "", collectionSlug: p.collection_slug,
         collectionName: p.collection_name, subcategory: p.subcategory ?? "", type: p.product_type,
         isNew: p.is_new === 1, isBestseller: p.is_bestseller === 1, fulfilmentInfo: p.fulfilment_info ?? "",
         shippingInfo: p.shipping_info ?? "", images: imagesBy.get(p.id) ?? [], variants: variantsBy.get(p.id) ?? [],
       }))
-      .filter((p) => p.variants.length > 0),
+      .filter((p) => p.variants.length > 0);
+
+  return JSON.stringify({
+    generatedAt: Math.floor(Date.now() / 1000),
+    collections: cols.results.map((c) => ({
+      slug: c.slug, name: c.name, blurb: c.blurb ?? "", imageUrl: c.image_url ?? "",
+      // The website only lists collections that have at least one live product.
+      productCount: products.filter((p) => p.collectionSlug === c.slug).length,
+      subcategories: cats.results.filter((x) => x.collection_slug === c.slug).map((x) => x.name),
+    })),
+    products,
   });
 }
 

@@ -73,3 +73,14 @@ export function id(v: unknown, label = "Item"): string {
   if (typeof v !== "string" || !/^[A-Za-z0-9_-]{1,64}$/.test(v)) return fail(`${label} is not valid.`);
   return v;
 }
+
+/** A photo from the website library (/images/...) or an upload (/api/media/<id>). Never an outside web address. */
+export function imagePath(v: unknown, label = "Picture"): string | null {
+  if (v === undefined || v === null || v === "") return null;
+  if (typeof v !== "string") return fail(`${label} is not valid.`);
+  const s = v.trim();
+  const library = /^\/images\/[A-Za-z0-9_\-/.]{1,200}\.(webp|jpe?g|png|avif)$/i.test(s) && !s.includes("..") && !s.includes("//");
+  const upload = /^\/api\/media\/[0-9a-f-]{36}$/.test(s);
+  if (!library && !upload) return fail(`${label} must be chosen from the photo library.`);
+  return s;
+}
