@@ -19,6 +19,8 @@ export const site = {
   facebook: "",
   address: "", // studio or pickup address, if any
   openingHours: "", // e.g. Mon to Sat, 10am to 6pm
+  heroImage: "", // chosen in Admin > Settings (a photo from the library)
+  bespokeImage: "",
 
   // ---- COMMERCE ----
   defaultCurrency: "NGN",
@@ -36,6 +38,8 @@ export const site = {
   facebook: string;
   address: string;
   openingHours: string;
+  heroImage: string;
+  bespokeImage: string;
   defaultCurrency: string;
   onlineCheckoutEnabled: boolean;
 };
