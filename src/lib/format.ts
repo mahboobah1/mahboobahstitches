@@ -30,3 +30,8 @@ export function toMinor(input: string): number | null {
 }
 
 export const fromMinor = (minor: number): string => (minor / 100).toString();
+
+/** A price of 0 means "not set yet": the website shows Price on request and sends customers to WhatsApp. */
+export const isOnRequest = (minor: number): boolean => minor === 0;
+export const priceLabel = (minor: number, currency?: string): string =>
+  isOnRequest(minor) ? "Price on request" : formatMoney(minor, currency);

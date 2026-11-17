@@ -16,9 +16,11 @@ export function whatsappLink(message: string): string {
 
 const origin = () => (typeof window !== "undefined" ? window.location.origin : "");
 
-export function productEnquiryLink(product: Product, variant?: Variant): string {
+export function productEnquiryLink(product: Product, variant?: Variant, askPrice = false): string {
   const lines = [
-    `Hello ${site.name}, I would like to ask about this item:`,
+    askPrice
+      ? `Hello ${site.name}, please send me the price and availability for this item:`
+      : `Hello ${site.name}, I would like to ask about this item:`,
     `Product: ${product.name}`,
     `Reference: ${variant ? variant.sku : product.id}`,
   ];
