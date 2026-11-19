@@ -84,3 +84,8 @@ export function imagePath(v: unknown, label = "Picture"): string | null {
   if (!library && !upload) return fail(`${label} must be chosen from the photo library.`);
   return s;
 }
+
+export function requiredPhone(v: unknown): string {
+  if (typeof v !== "string" || !/^\+?[0-9 ()-]{7,20}$/.test(v.trim())) return fail("Enter a valid phone number so we can reach you about delivery.");
+  return v.trim();
+}
