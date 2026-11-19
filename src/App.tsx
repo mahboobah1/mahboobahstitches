@@ -13,6 +13,14 @@ import AdminProductEditPage from "./pages/admin/AdminProductEditPage";
 import AdminProductsPage from "./pages/admin/AdminProductsPage";
 import AdminSettingsPage from "./pages/admin/AdminSettingsPage";
 import AdminStaffPage from "./pages/admin/AdminStaffPage";
+import AccountAddressesPage from "./pages/AccountAddressesPage";
+import AccountOrdersPage from "./pages/AccountOrdersPage";
+import AdminOrderPage from "./pages/admin/AdminOrderPage";
+import AdminOrdersPage from "./pages/admin/AdminOrdersPage";
+import AdminPaymentsPage from "./pages/admin/AdminPaymentsPage";
+import AdminPromotionsPage from "./pages/admin/AdminPromotionsPage";
+import CheckoutPage from "./pages/CheckoutPage";
+import OrderPage from "./pages/OrderPage";
 import ContentPage from "./pages/ContentPage";
 import { JournalPage, JournalPostPage } from "./pages/JournalPage";
 import CartPage from "./pages/CartPage";
@@ -52,14 +60,15 @@ export default function App() {
         <Route path="journal/:slug" element={<JournalPostPage />} />
         <Route path="faq" element={<ContentPage slug="faq" fallback={soon("Frequently asked questions", "soon", "Answers to common questions will appear here soon.", "I have a question.")} />} />
         <Route path="policies" element={<ContentPage slug="policies" fallback={soon("Policies", "soon", "Delivery, returns and privacy policies will be published here once the business confirms them.")} />} />
-        <Route path="checkout" element={soon("Checkout", "Phase 4", "Secure online payment is not switched on yet. Send your cart to us on WhatsApp to order.", "I would like to place an order.")} />
+        <Route path="checkout" element={<CheckoutPage />} />
+        <Route path="order/:number" element={<OrderPage />} />
 
         <Route path="account" element={<AccountPage />} />
         <Route path="account/login" element={<LoginPage />} />
         <Route path="account/register" element={<RegisterPage />} />
-        <Route path="account/orders" element={soon("My orders", "Phase 4", "Order tracking arrives with online checkout.")} />
+        <Route path="account/orders" element={<AccountOrdersPage />} />
         <Route path="account/wishlist" element={<WishlistPage />} />
-        <Route path="account/addresses" element={soon("My addresses", "Phase 4", "Saved addresses arrive with online checkout.")} />
+        <Route path="account/addresses" element={<AccountAddressesPage />} />
         <Route path="account/bookings" element={soon("My bookings", "Phase 5", "Your appointments will be listed here.")} />
 
         <Route path="admin/setup" element={<AdminSetupPage />} />
@@ -74,6 +83,10 @@ export default function App() {
           <Route path="content/:id" element={<AdminPageEditPage />} />
           <Route path="settings" element={<AdminSettingsPage />} />
           <Route path="staff" element={<AdminStaffPage />} />
+          <Route path="orders" element={<AdminOrdersPage />} />
+          <Route path="orders/:id" element={<AdminOrderPage />} />
+          <Route path="payments" element={<AdminPaymentsPage />} />
+          <Route path="promotions" element={<AdminPromotionsPage />} />
           <Route path="*" element={soon("Coming soon", "Phase 3 to 7", "This admin module is built in a later phase.")} />
         </Route>
         <Route path="*" element={<NotFoundPage />} />
