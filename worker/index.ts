@@ -1,6 +1,9 @@
 import type { Env } from "./types";
 import { HttpError, json } from "./lib/http";
 import { auditLog, overview } from "./routes/admin";
+import * as ord from "./routes/adminOrders";
+import * as co from "./routes/checkout";
+import { releaseExpired } from "./lib/orders";
 import * as cat from "./routes/adminCatalogue";
 import * as cms from "./routes/adminContent";
 import { login, logout, me, register } from "./routes/auth";
@@ -11,7 +14,7 @@ type Params = Record<string, string>;
 type Handler = (env: Env, req: Request, params: Params) => Promise<Response> | Response;
 
 const routes: [string, string, Handler][] = [
-  ["GET", "/api/health", () => json({ ok: true, service: "mahboobah-stitches", phase: 3 })],
+  ["GET", "/api/health", () => json({ ok: true, service: "mahboobah-stitches", phase: 4 })],
   ["GET", "/api/auth/me", (e, r) => me(e, r)],
   ["POST", "/api/auth/register", (e, r) => register(e, r)],
   ["POST", "/api/auth/login", (e, r) => login(e, r)],
@@ -24,7 +27,28 @@ const routes: [string, string, Handler][] = [
   ["GET", "/api/media/:id", pub.media],
   ["GET", "/api/content/journal", (e) => pub.journalList(e)],
   ["GET", "/api/content/pages/:slug", pub.publicPage],
+  // checkout, orders, payments
+  ["GET", "/api/checkout/config", (e) => co.checkoutConfig(e)],
+  ["POST", "/api/checkout/quote", (e, r) => co.quoteRoute(e, r)],
+  ["POST", "/api/checkout", (e, r) => co.placeOrder(e, r)],
+  ["GET", "/api/orders/:number", co.getOrder],
+  ["POST", "/api/orders/:number/verify", co.verifyOrder],
+  ["POST", "/api/orders/:number/pay", co.payAgain],
+  ["POST", "/api/webhooks/paystack", (e, r) => co.paystackWebhook(e, r)],
+  ["GET", "/api/account/orders", (e, r) => co.accountOrders(e, r)],
+  ["GET", "/api/account/addresses", (e, r) => co.listAddresses(e, r)],
+  ["POST", "/api/account/addresses", (e, r) => co.saveAddress(e, r)],
+  ["DELETE", "/api/account/addresses/:id", co.deleteAddress],
   // admin
+  ["GET", "/api/admin/orders", (e, r) => ord.listOrders(e, r)],
+  ["GET", "/api/admin/orders/:id", ord.getOrderAdmin],
+  ["PUT", "/api/admin/orders/:id/status", ord.setOrderStatus],
+  ["POST", "/api/admin/orders/:id/mark-paid", ord.markPaidManually],
+  ["POST", "/api/admin/orders/:id/note", ord.addOrderNote],
+  ["GET", "/api/admin/payments", (e, r) => ord.listPayments(e, r)],
+  ["GET", "/api/admin/promotions", (e, r) => ord.listPromotions(e, r)],
+  ["POST", "/api/admin/promotions", (e, r) => ord.createPromotion(e, r)],
+  ["PUT", "/api/admin/promotions/:id", ord.updatePromotion],
   ["GET", "/api/admin/overview", (e, r) => overview(e, r)],
   ["GET", "/api/admin/audit", (e, r) => auditLog(e, r)],
   ["GET", "/api/admin/collections", (e, r) => cat.listCollections(e, r)],
@@ -83,6 +107,10 @@ async function route(req: Request, env: Env, path: string): Promise<Response> {
 }
 
 export default {
+  /** Runs on the schedule in wrangler.toml: gives stock back from orders whose payment window ran out. */
+  async scheduled(_c: ScheduledController, env: Env, ctx: ExecutionContext): Promise<void> {
+    ctx.waitUntil(releaseExpired(env).then(() => undefined));
+  },
   async fetch(req: Request, env: Env): Promise<Response> {
     const url = new URL(req.url);
     if (!url.pathname.startsWith("/api/")) return env.ASSETS.fetch(req);
