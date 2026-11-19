@@ -77,7 +77,7 @@ export async function deletePage(env: Env, req: Request, p: Params): Promise<Res
 
 /* ---------------- business settings ---------------- */
 
-const SETTING_KEYS = ["whatsappNumber", "phone", "email", "instagram", "tiktok", "facebook", "address", "openingHours", "announcement", "demoMode", "heroImage", "bespokeImage"] as const;
+const SETTING_KEYS = ["whatsappNumber", "phone", "email", "instagram", "tiktok", "facebook", "address", "openingHours", "announcement", "demoMode", "heroImage", "bespokeImage", "deliveryFeeMinor", "deliveryNote"] as const;
 
 export async function getSettings(env: Env, req: Request): Promise<Response> {
   await guard(env, req, "settings:write");
@@ -88,7 +88,7 @@ export async function getSettings(env: Env, req: Request): Promise<Response> {
     const k = r.key.slice(5);
     if ((SETTING_KEYS as readonly string[]).includes(k)) out[k] = k === "demoMode" ? r.value === "1" : r.value;
   }
-  return json({ settings: out });
+  return json({ settings: { ...out, deliveryFeeMinor: Number(out.deliveryFeeMinor) || 0 } });
 }
 
 const httpsUrl = (val: unknown, label: string): string => {
@@ -117,6 +117,8 @@ export async function saveSettings(env: Env, req: Request): Promise<Response> {
     demoMode: v.bool(b.demoMode) ? "1" : "0",
     heroImage: v.imagePath(b.heroImage, "Homepage picture") ?? "",
     bespokeImage: v.imagePath(b.bespokeImage, "Bespoke picture") ?? "",
+    deliveryFeeMinor: String(v.int(b.deliveryFeeMinor ?? 0, "Delivery fee", 0, 100_000_000)),
+    deliveryNote: v.optText(b.deliveryNote, "Delivery note", 200) ?? "",
   };
   await env.DB.batch(
     SETTING_KEYS.map((k) =>

@@ -18,7 +18,10 @@ export async function overview(env: Env, req: Request): Promise<Response> {
     count(env, "SELECT COUNT(*) AS n FROM bookings WHERE status IN ('requested','confirmed')"),
     count(env, "SELECT COUNT(*) AS n FROM bespoke_requests WHERE status NOT IN ('completed','rejected','cancelled')"),
   ]);
-  return json({ customers, staff, products, orders, unpaidOrders: unpaid, openBookings: bookings, openBespoke: bespoke });
+  const toFulfil = await count(env, "SELECT COUNT(*) AS n FROM orders WHERE status IN ('paid_verified','fulfilling')");
+  // Real money only: the sum of orders whose payment was verified (or confirmed by the owner). Never estimated.
+  const paidRevenueMinor = await count(env, "SELECT COALESCE(SUM(total_minor),0) AS n FROM orders WHERE currency='NGN' AND status IN ('paid_verified','fulfilling','completed')");
+  return json({ customers, staff, products, orders, unpaidOrders: unpaid, ordersToFulfil: toFulfil, paidRevenueMinor, openBookings: bookings, openBespoke: bespoke });
 }
 
 export async function auditLog(env: Env, req: Request): Promise<Response> {
