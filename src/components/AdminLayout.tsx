@@ -35,6 +35,9 @@ export function AdminLayout() {
           {can("products:write") && <NavLink to="/admin/products" className={link}>Products</NavLink>}
           {can("products:write") && <NavLink to="/admin/collections" className={link}>Collections</NavLink>}
           {(can("inventory:write") || can("products:write")) && <NavLink to="/admin/inventory" className={link}>Inventory</NavLink>}
+          {can("orders:manage") && <NavLink to="/admin/orders" className={link}>Orders</NavLink>}
+          {can("orders:manage") && <NavLink to="/admin/payments" className={link}>Payments</NavLink>}
+          {can("orders:manage") && <NavLink to="/admin/promotions" className={link}>Discounts</NavLink>}
           {can("content:write") && <NavLink to="/admin/content" className={link}>Pages</NavLink>}
           {can("settings:write") && <NavLink to="/admin/settings" className={link}>Settings</NavLink>}
           {can("staff:manage") && <NavLink to="/admin/staff" className={link}>People</NavLink>}
