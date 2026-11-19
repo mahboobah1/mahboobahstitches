@@ -1,14 +1,17 @@
 import { Link } from "react-router-dom";
+import { api } from "../lib/api";
 import { ProductImage } from "../components/ProductImage";
 import { MAX_CART_QTY, useStore } from "../context/StoreContext";
 import { formatMoney } from "../lib/format";
 import { usePageMeta } from "../lib/usePageMeta";
 import { cartSummaryLink } from "../lib/whatsapp";
-import { site } from "../config/site";
+import { useEffect, useState } from "react";
 
 export default function CartPage() {
   usePageMeta("Your cart");
   const { lines, setQty, removeFromCart, clearCart } = useStore();
+  const [payOnline, setPayOnline] = useState(false);
+  useEffect(() => { api<{ paymentsEnabled: boolean }>("/api/checkout/config").then((c) => setPayOnline(c.paymentsEnabled)).catch(() => setPayOnline(false)); }, []);
 
   if (lines.length === 0) {
     return (
@@ -58,16 +61,16 @@ export default function CartPage() {
             <div className="flex justify-between"><dt>Subtotal</dt><dd>{formatMoney(total, lines[0].variant.currency)}</dd></div>
             <div className="flex justify-between"><dt>Delivery</dt><dd>Confirmed at order</dd></div>
           </dl>
-          <a href={cartSummaryLink(lines)} target="_blank" rel="noopener noreferrer" className="btn-primary mt-6 w-full">
+          <a href={cartSummaryLink(lines)} target="_blank" rel="noopener noreferrer" className={`${payOnline ? "btn-ghost" : "btn-primary"} mt-6 w-full`}>
             Send order summary on WhatsApp
           </a>
           <p className="mt-2 text-xs text-royal/70">
             This sends an enquiry. It is not a paid order until payment is confirmed.
           </p>
-          {site.onlineCheckoutEnabled ? (
-            <Link to="/checkout" className="btn-ghost mt-3 w-full">Continue to checkout</Link>
+          {payOnline ? (
+            <Link to="/checkout" className="btn-primary mt-3 w-full">Checkout and pay online</Link>
           ) : (
-            <p className="mt-3 text-xs text-royal/70">Online card payment is coming soon.</p>
+            <p className="mt-3 text-xs text-royal/70">Online payment is not switched on yet. Please order through WhatsApp.</p>
           )}
           <button type="button" className="link-line mt-4 text-sm" onClick={clearCart}>Empty cart</button>
         </aside>
