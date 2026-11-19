@@ -32,3 +32,10 @@ cryptography. Your first owner setup is the real test. See docs/SETUP-CLOUDFLARE
   R2 is the fix.
 - The shop's product list is pre-built into one database row after each admin change, so a shop visit costs one
   row read however many products there are.
+
+## Phase 4 additions
+- A checkout writes roughly 15 to 30 database rows (order, items, holds, events, payment) and a paid order a few more.
+  Against the free 100,000 writes per day that is thousands of orders, far above a boutique's volume.
+- Each purchase uses about 6 to 10 Worker requests (price check, checkout, return page, webhook). Well inside 100,000 per day.
+- A scheduled job runs every 15 minutes to release expired stock holds (cron triggers are included on the free plan, but I have not confirmed this from Cloudflare's current docs). If it is unavailable, holds are still released whenever someone checks out.
+- Paystack charges fees on each transaction and may apply limits to unregistered (starter) businesses. Confirm both with Paystack.

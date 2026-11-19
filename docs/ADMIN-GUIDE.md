@@ -25,6 +25,15 @@ The photos were set up as live products with a price of 0. The website shows "Pr
 instead of Add to cart. To start selling one: Admin > Products > open it > set the option's real price (and size, colour, stock).
 Products still at 0 show a "Needs a price" tag in the product list. To hide a product, set its Status to Draft.
 
+## Orders and payments
+- **Orders:** every website order with its stage: Awaiting payment, Paid, Being prepared, Completed (or Cancelled / Refunded).
+  Open one to see the customer, items, address, payments and history. Use the buttons to move it along. Orders only become Paid by a verified Paystack payment, or by you using
+  **Mark as paid** after you have seen a bank transfer yourself (it is recorded with your name).
+- **Payments:** every payment attempt and whether it succeeded.
+- **Discounts:** make codes such as EID10 (percent or naira off, minimum order, maximum uses, end date) and switch them on or off.
+- **Delivery fee:** Settings > Delivery at checkout. One flat fee for now; delivery zones come later.
+- A WhatsApp enquiry is not an order. It only becomes one after it is paid (or you mark it paid) through the website.
+
 ## Stock
 - Admin > **Inventory**: tap any row to add stock, remove stock, or enter a counted total. Every change is recorded with your name and the reason.
 - An option with zero stock shows as unavailable on the shop automatically.
