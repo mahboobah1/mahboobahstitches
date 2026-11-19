@@ -9,6 +9,10 @@ binding = "ASSETS"
 not_found_handling = "single-page-application"
 run_worker_first = ["/api/*"]
 
+# Every 15 minutes: release stock held by unpaid orders whose payment window has run out.
+[triggers]
+crons = ["*/15 * * * *"]
+
 [[d1_databases]]
 binding = "DB"
 database_name = "mahboobah-db"

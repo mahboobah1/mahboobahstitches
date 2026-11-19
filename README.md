@@ -3,7 +3,12 @@
 Modest fashion e-commerce: React + Vite + TypeScript + Tailwind on Cloudflare Pages,
 with a Cloudflare Workers / D1 backend arriving in later phases.
 
-## Status: Phase 3b (photos, collections, photo library)
+## Status: Phase 4 (checkout, payments, orders)
+Added: guest and signed-in checkout, server-side pricing, 30-minute stock holds, Paystack payments with server verification
+and signed webhooks, order pages and emails-by-Paystack receipts, My orders / My addresses, admin Orders, Payments and Discount
+codes, real paid-revenue on the dashboard. Setup: `docs/PAYSTACK-SETUP.md`.
+
+## Phase 3b (photos, collections, photo library)
 Added: 19 products and a new Two-Piece Sets collection created from your photos; collection covers and homepage
 pictures; an admin photo picker that lists everything in `public/images/` (rebuilt on every deploy by
 `scripts/make-image-manifest.mjs`); "Price on request" products that send customers to WhatsApp.
