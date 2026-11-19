@@ -3,11 +3,12 @@ import { CheckField, Notice, errText, type Msg } from "../../components/admin/ki
 import { FormField } from "../../components/FormField";
 import { PictureField } from "../../components/admin/ImagePicker";
 import { api } from "../../lib/api";
+import { formatMoney, fromMinor, toMinor } from "../../lib/format";
 import { usePageMeta } from "../../lib/usePageMeta";
 
 type S = {
   whatsappNumber: string; phone: string; email: string; instagram: string; tiktok: string; facebook: string;
-  address: string; openingHours: string; announcement: string; demoMode: boolean; heroImage: string; bespokeImage: string;
+  address: string; openingHours: string; announcement: string; demoMode: boolean; heroImage: string; bespokeImage: string; deliveryFeeMinor: number; deliveryNote: string;
 };
 
 export default function AdminSettingsPage() {
@@ -15,9 +16,10 @@ export default function AdminSettingsPage() {
   const [s, setS] = useState<S | null>(null);
   const [msg, setMsg] = useState<Msg | null>(null);
   const [busy, setBusy] = useState(false);
+  const [fee, setFee] = useState("");
 
   useEffect(() => {
-    api<{ settings: S }>("/api/admin/settings").then((d) => setS(d.settings)).catch((e) => setMsg({ ok: false, text: errText(e) }));
+    api<{ settings: S }>("/api/admin/settings").then((d) => { setS(d.settings); setFee(fromMinor(d.settings.deliveryFeeMinor)); }).catch((e) => setMsg({ ok: false, text: errText(e) }));
   }, []);
 
   if (!s) return msg ? <Notice msg={msg} /> : <p role="status">Loading…</p>;
@@ -28,7 +30,9 @@ export default function AdminSettingsPage() {
     setBusy(true);
     setMsg(null);
     try {
-      await api("/api/admin/settings", { method: "PUT", body: s });
+      const feeMinor = fee.trim() ? toMinor(fee) : 0;
+      if (feeMinor === null) { setMsg({ ok: false, text: "Enter the delivery fee as a number, e.g. 2500." }); setBusy(false); return; }
+      await api("/api/admin/settings", { method: "PUT", body: { ...s, deliveryFeeMinor: feeMinor } });
       setMsg({ ok: true, text: "Saved. The website shows these details from the next page load." });
     } catch (err) {
       setMsg({ ok: false, text: errText(err) });
@@ -45,6 +49,9 @@ export default function AdminSettingsPage() {
         <h2 className="!text-2xl">Homepage pictures</h2>
         <PictureField label="Main picture at the top of the homepage" value={s.heroImage} onChange={(u) => set("heroImage", u)} />
         <PictureField label="Picture beside the custom-orders section" value={s.bespokeImage} onChange={(u) => set("bespokeImage", u)} />
+        <h2 className="!text-2xl pt-4">Delivery at checkout</h2>
+        <FormField label="Delivery fee (₦)" inputMode="decimal" value={fee} onChange={(e) => setFee(e.target.value)} hint={`One fee for every online order for now (${formatMoney(toMinor(fee || "0") ?? 0)}). Leave 0 and we show "Confirmed by us". Delivery zones come later.`} />
+        <FormField label="Delivery note shown at checkout" value={s.deliveryNote} maxLength={200} onChange={(e) => set("deliveryNote", e.target.value)} hint="For example: Lagos 2 to 3 working days. Other states confirmed by WhatsApp." />
         <h2 className="!text-2xl pt-4">Contact and business details</h2>
         <FormField label="WhatsApp number" inputMode="tel" value={s.whatsappNumber} onChange={(e) => set("whatsappNumber", e.target.value)} hint="With country code, e.g. 2348012345678. This powers every WhatsApp button." />
         <FormField label="Phone number" inputMode="tel" value={s.phone} onChange={(e) => set("phone", e.target.value)} />
