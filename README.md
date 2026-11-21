@@ -3,7 +3,12 @@
 Modest fashion e-commerce: React + Vite + TypeScript + Tailwind on Cloudflare Pages,
 with a Cloudflare Workers / D1 backend arriving in later phases.
 
-## Status: Phase 4 (checkout, payments, orders)
+## Status: Phase 5 (bespoke tailoring and appointment booking)
+Added: bespoke request form with photo uploads, quotations, approval and conversion to a payable order; booking calendar with
+opening hours, closed days, clash prevention, cancellation and rescheduling; customer private links; admin Bespoke, Bookings and
+Availability screens. WhatsApp enquiry buttons carry the request or booking reference.
+
+## Phase 4 (checkout, payments, orders)
 Added: guest and signed-in checkout, server-side pricing, 30-minute stock holds, Paystack payments with server verification
 and signed webhooks, order pages and emails-by-Paystack receipts, My orders / My addresses, admin Orders, Payments and Discount
 codes, real paid-revenue on the dashboard. Setup: `docs/PAYSTACK-SETUP.md`.
