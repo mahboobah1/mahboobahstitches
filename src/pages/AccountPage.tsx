@@ -20,6 +20,7 @@ export default function AccountPage() {
         <li><Link className="block py-4" to="/account/wishlist">Wishlist</Link></li>
         <li><Link className="block py-4" to="/account/addresses">Addresses</Link></li>
         <li><Link className="block py-4" to="/account/bookings">Bookings</Link></li>
+        <li><Link className="block py-4" to="/account/bespoke">Custom orders</Link></li>
         {can("admin:access") && <li><Link className="block py-4 font-medium" to="/admin">Open the admin area</Link></li>}
       </ul>
       <button

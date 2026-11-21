@@ -13,6 +13,7 @@ interface Overview {
   paidRevenueMinor: number;
   openBookings: number;
   openBespoke: number;
+  newBespoke: number;
 }
 
 const tiles: { key: keyof Overview; label: string }[] = [
@@ -21,7 +22,8 @@ const tiles: { key: keyof Overview; label: string }[] = [
   { key: "orders", label: "Orders" },
   { key: "ordersToFulfil", label: "Orders to prepare" },
   { key: "unpaidOrders", label: "Unpaid orders" },
-  { key: "openBookings", label: "Open bookings" },
+  { key: "openBookings", label: "Upcoming bookings" },
+  { key: "newBespoke", label: "New bespoke requests" },
   { key: "openBespoke", label: "Open bespoke requests" },
   { key: "staff", label: "Staff accounts" },
 ];
@@ -55,7 +57,7 @@ export default function AdminDashboardPage() {
         </>
       )}
       <p className="mt-10 text-sm text-royal/70">
-        Bookings, bespoke requests, gift bundles, reviews and analytics are added in the next phases.
+        Gift bundles, reviews, shipping rates and analytics are added in the next phases.
       </p>
     </>
   );
