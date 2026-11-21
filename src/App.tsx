@@ -21,6 +21,17 @@ import AdminPaymentsPage from "./pages/admin/AdminPaymentsPage";
 import AdminPromotionsPage from "./pages/admin/AdminPromotionsPage";
 import CheckoutPage from "./pages/CheckoutPage";
 import OrderPage from "./pages/OrderPage";
+import AccountBespokePage from "./pages/AccountBespokePage";
+import AccountBookingsPage from "./pages/AccountBookingsPage";
+import AdminAvailabilityPage from "./pages/admin/AdminAvailabilityPage";
+import AdminBespokeDetailPage from "./pages/admin/AdminBespokeDetailPage";
+import AdminBespokePage from "./pages/admin/AdminBespokePage";
+import AdminBookingPage from "./pages/admin/AdminBookingPage";
+import AdminBookingsPage from "./pages/admin/AdminBookingsPage";
+import BespokePage from "./pages/BespokePage";
+import BespokeRequestPage from "./pages/BespokeRequestPage";
+import BookingsPage from "./pages/BookingsPage";
+import BookingViewPage from "./pages/BookingViewPage";
 import ContentPage from "./pages/ContentPage";
 import { JournalPage, JournalPostPage } from "./pages/JournalPage";
 import CartPage from "./pages/CartPage";
@@ -53,8 +64,10 @@ export default function App() {
         <Route path="contact" element={<ContactPage />} />
 
         <Route path="gift-studio" element={soon("Gift Studio", "Phase 6", "Build a gift from prayer dresses, mats and packaging, with a personal message. Until then, tell us what you have in mind.", "I would like help choosing a gift.")} />
-        <Route path="bespoke" element={soon("Bespoke tailoring", "Phase 5", "The custom-order form arrives soon. Until then, message us your design idea and measurements.", "I would like a custom-made outfit.")} />
-        <Route path="bookings" element={soon("Book a fitting", "Phase 5", "Online appointment booking arrives soon. Until then, message us to arrange a time.", "I would like to book a consultation or fitting.")} />
+        <Route path="bespoke" element={<BespokePage />} />
+        <Route path="bespoke/request/:ref" element={<BespokeRequestPage />} />
+        <Route path="bookings" element={<BookingsPage />} />
+        <Route path="bookings/:ref" element={<BookingViewPage />} />
         <Route path="about" element={<ContentPage slug="about" fallback={soon("About us", "soon", "Our story will be shared here soon.")} />} />
         <Route path="journal" element={<JournalPage />} />
         <Route path="journal/:slug" element={<JournalPostPage />} />
@@ -69,7 +82,8 @@ export default function App() {
         <Route path="account/orders" element={<AccountOrdersPage />} />
         <Route path="account/wishlist" element={<WishlistPage />} />
         <Route path="account/addresses" element={<AccountAddressesPage />} />
-        <Route path="account/bookings" element={soon("My bookings", "Phase 5", "Your appointments will be listed here.")} />
+        <Route path="account/bookings" element={<AccountBookingsPage />} />
+        <Route path="account/bespoke" element={<AccountBespokePage />} />
 
         <Route path="admin/setup" element={<AdminSetupPage />} />
         <Route path="admin" element={<AdminLayout />}>
@@ -86,6 +100,11 @@ export default function App() {
           <Route path="orders" element={<AdminOrdersPage />} />
           <Route path="orders/:id" element={<AdminOrderPage />} />
           <Route path="payments" element={<AdminPaymentsPage />} />
+          <Route path="bespoke" element={<AdminBespokePage />} />
+          <Route path="bespoke/:id" element={<AdminBespokeDetailPage />} />
+          <Route path="bookings" element={<AdminBookingsPage />} />
+          <Route path="bookings/:id" element={<AdminBookingPage />} />
+          <Route path="availability" element={<AdminAvailabilityPage />} />
           <Route path="promotions" element={<AdminPromotionsPage />} />
           <Route path="*" element={soon("Coming soon", "Phase 3 to 7", "This admin module is built in a later phase.")} />
         </Route>
