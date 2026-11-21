@@ -119,7 +119,7 @@ export async function quote(env: Env, rawItems: unknown, promoCode: unknown): Pr
 /* ---------------- creating an order and holding stock ---------------- */
 
 const ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-const orderNumber = () => "MS-" + [...crypto.getRandomValues(new Uint8Array(6))].map((b) => ALPHABET[b % ALPHABET.length]).join("");
+export const orderNumber = () => "MS-" + [...crypto.getRandomValues(new Uint8Array(6))].map((b) => ALPHABET[b % ALPHABET.length]).join("");
 export const newReference = (num: string) => `${num}-${randomToken(5)}`;
 
 export interface NewOrder {
