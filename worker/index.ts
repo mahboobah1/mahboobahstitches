@@ -4,6 +4,9 @@ import { auditLog, overview } from "./routes/admin";
 import * as ord from "./routes/adminOrders";
 import * as co from "./routes/checkout";
 import { releaseExpired } from "./lib/orders";
+import { cleanOrphanUploads } from "./lib/media";
+import * as bsp from "./routes/bespoke";
+import * as bk from "./routes/bookings";
 import * as cat from "./routes/adminCatalogue";
 import * as cms from "./routes/adminContent";
 import { login, logout, me, register } from "./routes/auth";
@@ -14,7 +17,7 @@ type Params = Record<string, string>;
 type Handler = (env: Env, req: Request, params: Params) => Promise<Response> | Response;
 
 const routes: [string, string, Handler][] = [
-  ["GET", "/api/health", () => json({ ok: true, service: "mahboobah-stitches", phase: 4 })],
+  ["GET", "/api/health", () => json({ ok: true, service: "mahboobah-stitches", phase: 5 })],
   ["GET", "/api/auth/me", (e, r) => me(e, r)],
   ["POST", "/api/auth/register", (e, r) => register(e, r)],
   ["POST", "/api/auth/login", (e, r) => login(e, r)],
@@ -39,7 +42,45 @@ const routes: [string, string, Handler][] = [
   ["GET", "/api/account/addresses", (e, r) => co.listAddresses(e, r)],
   ["POST", "/api/account/addresses", (e, r) => co.saveAddress(e, r)],
   ["DELETE", "/api/account/addresses/:id", co.deleteAddress],
+  // bespoke tailoring
+  ["GET", "/api/bespoke/config", () => bsp.bespokeConfig()],
+  ["POST", "/api/bespoke/uploads", (e, r) => bsp.uploadReference(e, r)],
+  ["POST", "/api/bespoke", (e, r) => bsp.submitBespoke(e, r)],
+  ["GET", "/api/bespoke/:ref", bsp.viewBespoke],
+  ["POST", "/api/bespoke/:ref/message", bsp.customerMessage],
+  ["POST", "/api/bespoke/:ref/respond", bsp.customerRespond],
+  ["GET", "/api/account/bespoke", (e, r) => bsp.accountBespoke(e, r)],
+  // bookings
+  ["GET", "/api/bookings/config", (e) => bk.bookingConfig(e)],
+  ["GET", "/api/bookings/days", (e, r) => bk.bookingDays(e, r)],
+  ["GET", "/api/bookings/slots", (e, r) => bk.bookingSlots(e, r)],
+  ["POST", "/api/bookings", (e, r) => bk.createBooking(e, r)],
+  ["GET", "/api/bookings/:ref", bk.getBooking],
+  ["GET", "/api/bookings/:ref/ics", bk.bookingIcs],
+  ["POST", "/api/bookings/:ref/cancel", bk.cancelBooking],
+  ["POST", "/api/bookings/:ref/reschedule", bk.rescheduleBooking],
+  ["GET", "/api/account/bookings", (e, r) => bk.accountBookings(e, r)],
   // admin
+  ["GET", "/api/admin/bespoke", (e, r) => bsp.adminList(e, r)],
+  ["GET", "/api/admin/bespoke/:id", bsp.adminGet],
+  ["PUT", "/api/admin/bespoke/:id/status", bsp.adminStatus],
+  ["POST", "/api/admin/bespoke/:id/message", bsp.adminMessage],
+  ["PUT", "/api/admin/bespoke/:id/quote", bsp.adminQuote],
+  ["POST", "/api/admin/bespoke/:id/convert", bsp.adminConvert],
+  ["POST", "/api/admin/bespoke/:id/new-link", bsp.adminNewLink],
+  ["GET", "/api/admin/bookings", (e, r) => bk.adminList(e, r)],
+  ["GET", "/api/admin/bookings/:id", bk.adminGet],
+  ["PUT", "/api/admin/bookings/:id/status", bk.adminStatus],
+  ["POST", "/api/admin/bookings/:id/reschedule", bk.adminReschedule],
+  ["POST", "/api/admin/bookings/:id/new-link", bk.adminNewLink],
+  ["GET", "/api/admin/booking-config", (e, r) => bk.adminConfig(e, r)],
+  ["PUT", "/api/admin/booking-settings", (e, r) => bk.adminSaveSettings(e, r)],
+  ["POST", "/api/admin/booking-types", (e, r) => bk.adminCreateType(e, r)],
+  ["PUT", "/api/admin/booking-types/:id", bk.adminUpdateType],
+  ["POST", "/api/admin/availability", (e, r) => bk.adminAddRule(e, r)],
+  ["DELETE", "/api/admin/availability/:id", bk.adminDeleteRule],
+  ["POST", "/api/admin/closed-dates", (e, r) => bk.adminAddClosed(e, r)],
+  ["DELETE", "/api/admin/closed-dates/:date", bk.adminDeleteClosed],
   ["GET", "/api/admin/orders", (e, r) => ord.listOrders(e, r)],
   ["GET", "/api/admin/orders/:id", ord.getOrderAdmin],
   ["PUT", "/api/admin/orders/:id/status", ord.setOrderStatus],
@@ -109,7 +150,7 @@ async function route(req: Request, env: Env, path: string): Promise<Response> {
 export default {
   /** Runs on the schedule in wrangler.toml: gives stock back from orders whose payment window ran out. */
   async scheduled(_c: ScheduledController, env: Env, ctx: ExecutionContext): Promise<void> {
-    ctx.waitUntil(releaseExpired(env).then(() => undefined));
+    ctx.waitUntil(Promise.all([releaseExpired(env), cleanOrphanUploads(env)]).then(() => undefined));
   },
   async fetch(req: Request, env: Env): Promise<Response> {
     const url = new URL(req.url);
