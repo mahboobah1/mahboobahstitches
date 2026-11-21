@@ -34,6 +34,23 @@ Products still at 0 show a "Needs a price" tag in the product list. To hide a pr
 - **Delivery fee:** Settings > Delivery at checkout. One flat fee for now; delivery zones come later.
 - A WhatsApp enquiry is not an order. It only becomes one after it is paid (or you mark it paid) through the website.
 
+## Bookings (set this up before customers can book)
+1. Admin > **Availability** > **Opening hours**: add the days and hours you take appointments, e.g. Monday 10:00 to 17:00. Until you add hours, the website offers no booking times (nothing is assumed).
+2. Add **Days closed** for holidays. Check the **Appointment types** (Consultation, Measurements, Fitting, Custom design discussion). The lengths are starting suggestions, so change them to suit you.
+3. **Booking rules**: minimum notice, how far ahead customers can book, free-cancellation window, and whether bookings are confirmed automatically or you approve each one. Time zone is 60 for Nigeria.
+4. **Bookings** shows your calendar by day. Open a booking to confirm it, mark it completed or no-show, cancel it, or move it to another free time. Two bookings can never overlap.
+5. Customers get a private link to their booking (they can add it to their phone calendar, change the time or cancel up to your notice window). If a customer loses their link, open the booking and tap **Create a new private link**, then send it by WhatsApp.
+
+## Bespoke (custom-made outfits)
+1. Customers send the form at **/bespoke**: outfit type, design description, photos, fabric, colour, measurements, deadline and notes.
+2. **Bespoke** in the admin lists requests. Open one and:
+   - **Start review**, then **write to the customer** (tick "This is a question" to mark it as waiting for their answer).
+   - Enter a **price** and **Save quotation**. The customer cannot see it yet. Tap **Send quotation to customer** when ready.
+   - The customer approves from their request page, or you tap **Record customer approval** if they agreed on WhatsApp.
+   - Tap **Convert to order**. The customer then pays online from the same page (or you can **Mark as paid** in Orders for a bank transfer).
+   - Move it to **In production** and **Completed**.
+3. Customers' reference photos are kept private to the request; unattached uploads are deleted after a day.
+
 ## Stock
 - Admin > **Inventory**: tap any row to add stock, remove stock, or enter a counted total. Every change is recorded with your name and the reason.
 - An option with zero stock shows as unavailable on the shop automatically.

@@ -39,3 +39,8 @@ cryptography. Your first owner setup is the real test. See docs/SETUP-CLOUDFLARE
 - Each purchase uses about 6 to 10 Worker requests (price check, checkout, return page, webhook). Well inside 100,000 per day.
 - A scheduled job runs every 15 minutes to release expired stock holds (cron triggers are included on the free plan, but I have not confirmed this from Cloudflare's current docs). If it is unavailable, holds are still released whenever someone checks out.
 - Paystack charges fees on each transaction and may apply limits to unregistered (starter) businesses. Confirm both with Paystack.
+
+## Phase 5 additions
+- Customer reference photos are stored in the database like product photos (up to 5 per request, each resized to about 560 KB or less). They are removed after a day if never attached to a request.
+- Booking pages call the API to list free days and times: about 3 to 5 requests per visit, well inside the 100,000 per day.
+- A booking uses a few database rows. Opening hours are checked on the server every time, so the free times can never go out of date.
