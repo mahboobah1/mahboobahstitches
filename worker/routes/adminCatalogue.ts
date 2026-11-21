@@ -2,6 +2,7 @@ import type { Env } from "../types";
 import { audit } from "../lib/audit";
 import { guard, ip } from "../lib/guard";
 import { HttpError, json, readJson } from "../lib/http";
+import { saveImage } from "../lib/media";
 import { rebuildSnapshot } from "../lib/snapshot";
 import * as v from "../lib/validate";
 
@@ -284,20 +285,9 @@ export async function movements(env: Env, req: Request, p: Params): Promise<Resp
 
 export async function uploadMedia(env: Env, req: Request): Promise<Response> {
   const user = await guard(env, req, "products:write", "content:write");
-  const b = await readJson(req, 1_000_000);
-  const mime = v.oneOf(b.mime, "Image type", ["image/jpeg", "image/png", "image/webp"] as const);
-  const data = typeof b.dataBase64 === "string" ? b.dataBase64 : "";
-  if (!/^[A-Za-z0-9+/]+={0,2}$/.test(data) || data.length < 100) throw new HttpError(422, "That image could not be read.");
-  const bytes = Math.floor((data.length * 3) / 4) - (data.endsWith("==") ? 2 : data.endsWith("=") ? 1 : 0);
-  if (bytes > 600_000) throw new HttpError(413, "That image is too large (limit about 600 KB).");
-  // Check the file's real signature, not just what the browser claims.
-  const head = atob(data.slice(0, 24));
-  const okSig = mime === "image/jpeg" ? head.startsWith("\xff\xd8\xff") : mime === "image/png" ? head.startsWith("\x89PNG") : head.startsWith("RIFF") && head.slice(8, 12) === "WEBP";
-  if (!okSig) throw new HttpError(422, "That file is not a valid image.");
-  const id = crypto.randomUUID();
-  await env.DB.prepare("INSERT INTO media (id, mime, bytes, data_b64, created_by) VALUES (?1,?2,?3,?4,?5)").bind(id, mime, bytes, data, user.id).run();
-  await audit(env, { actor: user.id, action: "media.upload", entity: "media", entityId: id, ip: ip(req), meta: { bytes } });
-  return json({ id, url: `/api/media/${id}` }, 201);
+  const saved = await saveImage(env, await readJson(req, 1_000_000), user.id);
+  await audit(env, { actor: user.id, action: "media.upload", entity: "media", entityId: saved.id, ip: ip(req), meta: { bytes: saved.bytes } });
+  return json({ id: saved.id, url: saved.url }, 201);
 }
 
 export async function addImage(env: Env, req: Request, p: Params): Promise<Response> {
@@ -367,6 +357,6 @@ export async function reorderImages(env: Env, req: Request, p: Params): Promise<
 /** Uploaded photos (from the phone), newest first, for the photo picker. Website-library photos come from /images/manifest.json. */
 export async function listMedia(env: Env, req: Request): Promise<Response> {
   await guard(env, req, "products:write", "content:write", "settings:write");
-  const rows = await env.DB.prepare("SELECT id, bytes, created_at AS createdAt FROM media ORDER BY created_at DESC, rowid DESC LIMIT 100").all<{ id: string; bytes: number; createdAt: number }>();
+  const rows = await env.DB.prepare("SELECT id, bytes, created_at AS createdAt FROM media WHERE created_by IS NOT NULL ORDER BY created_at DESC, rowid DESC LIMIT 100").all<{ id: string; bytes: number; createdAt: number }>();
   return json({ items: rows.results.map((r) => ({ ...r, url: `/api/media/${r.id}` })) });
 }

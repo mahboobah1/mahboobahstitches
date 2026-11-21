@@ -92,7 +92,12 @@ async function authorizeOrder(env: Env, req: Request, number: string, token: str
   const o = await env.DB.prepare("SELECT * FROM orders WHERE order_number=?1").bind(number).first<OrderRow>();
   if (!o) throw new HttpError(404, "Order not found.");
   const user = await getSessionUser(env, req);
-  const tokenOk = !!token && !!o.public_token_hash && (await safeEqual(await sha256Hex(token), o.public_token_hash));
+  let tokenOk = !!token && !!o.public_token_hash && (await safeEqual(await sha256Hex(token), o.public_token_hash));
+  if (!tokenOk && token) {
+    // A bespoke order can also be reached with the private link of the request it came from.
+    const br = await env.DB.prepare("SELECT public_token_hash FROM bespoke_requests WHERE order_id=?1").bind(o.id).first<{ public_token_hash: string | null }>();
+    tokenOk = !!br?.public_token_hash && (await safeEqual(await sha256Hex(token), br.public_token_hash));
+  }
   const userOk = !!user && (user.id === o.user_id || can(user.role, "orders:manage"));
   if (!tokenOk && !userOk) throw new HttpError(404, "Order not found.");
   return o;
