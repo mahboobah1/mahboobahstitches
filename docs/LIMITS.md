@@ -44,3 +44,10 @@ cryptography. Your first owner setup is the real test. See docs/SETUP-CLOUDFLARE
 - Customer reference photos are stored in the database like product photos (up to 5 per request, each resized to about 560 KB or less). They are removed after a day if never attached to a request.
 - Booking pages call the API to list free days and times: about 3 to 5 requests per visit, well inside the 100,000 per day.
 - A booking uses a few database rows. Opening hours are checked on the server every time, so the free times can never go out of date.
+
+## Phase 6 and 7 additions
+- IMPORTANT: product, collection, journal, About, FAQ and Policies pages are now served through the Worker (to add search and sharing tags). Each view of those pages counts as one Worker request and reads one database row. The free allowance is 100,000 requests and 5 million row reads per day, so roughly 30,000 or more page views a day before you would need a paid plan. Shop, cart and other pages are still plain static files.
+- The sitemap and robots.txt are built on demand (one small database read each).
+- Analytics queries read order rows for the chosen period; they are only run when you open the Analytics page.
+- Shipping rates are fixed prices you set. There is no live courier pricing.
+- Only naira is charged. Other currencies are not offered at checkout.

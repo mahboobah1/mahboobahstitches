@@ -51,6 +51,29 @@ Products still at 0 show a "Needs a price" tag in the product list. To hide a pr
    - Move it to **In production** and **Completed**.
 3. Customers' reference photos are kept private to the request; unattached uploads are deleted after a day.
 
+## Shipping and delivery
+- **Shipping** (admin): add a **zone** (a country, or only some states, e.g. Lagos), then its **delivery options** with a price, delivery days and an optional "free over ₦X" amount. A zone that lists states beats a whole-country zone. Use a ₦0 option named "Pickup" for collection.
+- Customers pick a country, state and one of your options at checkout. A country with no zone cannot order online and is pointed to WhatsApp.
+- Until you add any zone, checkout keeps the single flat fee in Settings (Nigeria only).
+- Orders are paid in naira for every country. Charging in other currencies needs that currency switched on in your Paystack account first.
+- **Shipping an order:** open a paid order > Delivery > add the carrier and tracking number > **Add as shipped**. The customer sees the tracking on their order page. Then **Mark delivered**, and **Mark completed** on the order.
+
+## Gift Studio
+- **Gifts** (admin): a **fixed set** is a list of products; a **build-your-own** gift has steps (for example Dress, Mat) and the products customers can pick for each. A gift has no stock of its own. Buying one uses its products' stock, and a gift disappears when a product sells out.
+- Set an optional **gift saving** (% off the products) and add **packaging** options with prices. Customers add a personal message and recipient.
+- Gifts needing packing show on the order page with the card message.
+
+## Reviews, newsletter and customers
+- **Reviews:** only customers who bought a product can review it. Approve or reject them in Reviews. Approved reviews show stars on the product and the best ones appear on the homepage.
+- **Subscribers:** people who joined the newsletter. Download the CSV for a free email tool; this website does not send emails.
+- **Customers:** everyone with an account, their paid orders and what they spent, with their bookings and custom requests.
+- **Analytics:** paid revenue by day, top products, sales by collection, low stock, orders by stage, discount codes used. All of it comes from real orders. Website visits are not tracked.
+- Downloads (orders, customers, subscribers) open in Excel or Google Sheets.
+
+## Search and sharing (SEO)
+- Product, collection, journal and info pages carry their own title, description, share picture and product details for Google and for WhatsApp link previews. A sitemap is at `/sitemap.xml`.
+- For best results: write real product descriptions, add a clear photo description to every photo, and (when you get a custom domain) submit the sitemap in Google Search Console.
+
 ## Stock
 - Admin > **Inventory**: tap any row to add stock, remove stock, or enter a counted total. Every change is recorded with your name and the reason.
 - An option with zero stock shows as unavailable on the shop automatically.
