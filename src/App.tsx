@@ -20,6 +20,7 @@ import AdminOrdersPage from "./pages/admin/AdminOrdersPage";
 import AdminPaymentsPage from "./pages/admin/AdminPaymentsPage";
 import AdminPromotionsPage from "./pages/admin/AdminPromotionsPage";
 import CheckoutPage from "./pages/CheckoutPage";
+import GiftStudioPage from "./pages/GiftStudioPage";
 import OrderPage from "./pages/OrderPage";
 import AccountBespokePage from "./pages/AccountBespokePage";
 import AccountBookingsPage from "./pages/AccountBookingsPage";
@@ -32,6 +33,12 @@ import BespokePage from "./pages/BespokePage";
 import BespokeRequestPage from "./pages/BespokeRequestPage";
 import BookingsPage from "./pages/BookingsPage";
 import BookingViewPage from "./pages/BookingViewPage";
+import AdminAnalyticsPage from "./pages/admin/AdminAnalyticsPage";
+import AdminCustomersPage, { AdminCustomerPage } from "./pages/admin/AdminCustomersPage";
+import AdminGiftsPage from "./pages/admin/AdminGiftsPage";
+import AdminReviewsPage from "./pages/admin/AdminReviewsPage";
+import AdminShippingPage from "./pages/admin/AdminShippingPage";
+import AdminSubscribersPage from "./pages/admin/AdminSubscribersPage";
 import ContentPage from "./pages/ContentPage";
 import { JournalPage, JournalPostPage } from "./pages/JournalPage";
 import CartPage from "./pages/CartPage";
@@ -63,7 +70,7 @@ export default function App() {
         <Route path="cart" element={<CartPage />} />
         <Route path="contact" element={<ContactPage />} />
 
-        <Route path="gift-studio" element={soon("Gift Studio", "Phase 6", "Build a gift from prayer dresses, mats and packaging, with a personal message. Until then, tell us what you have in mind.", "I would like help choosing a gift.")} />
+        <Route path="gift-studio" element={<GiftStudioPage />} />
         <Route path="bespoke" element={<BespokePage />} />
         <Route path="bespoke/request/:ref" element={<BespokeRequestPage />} />
         <Route path="bookings" element={<BookingsPage />} />
@@ -105,6 +112,13 @@ export default function App() {
           <Route path="bookings" element={<AdminBookingsPage />} />
           <Route path="bookings/:id" element={<AdminBookingPage />} />
           <Route path="availability" element={<AdminAvailabilityPage />} />
+          <Route path="gifts" element={<AdminGiftsPage />} />
+          <Route path="shipping" element={<AdminShippingPage />} />
+          <Route path="customers" element={<AdminCustomersPage />} />
+          <Route path="customers/:id" element={<AdminCustomerPage />} />
+          <Route path="reviews" element={<AdminReviewsPage />} />
+          <Route path="subscribers" element={<AdminSubscribersPage />} />
+          <Route path="analytics" element={<AdminAnalyticsPage />} />
           <Route path="promotions" element={<AdminPromotionsPage />} />
           <Route path="*" element={soon("Coming soon", "Phase 3 to 7", "This admin module is built in a later phase.")} />
         </Route>
