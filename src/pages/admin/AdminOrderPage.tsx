@@ -8,8 +8,10 @@ import { fmtDate, orderStatusLabel } from "../../lib/orderStatus";
 import { usePageMeta } from "../../lib/usePageMeta";
 
 interface Detail {
-  order: { id: string; number: string; status: string; currency: string; subtotalMinor: number; discountMinor: number; shippingMinor: number; totalMinor: number; promotionCode: string | null; name: string | null; email: string | null; phone: string | null; giftMessage: string | null; notes: string | null; createdAt: number; paidAt: number | null; address: { recipientName: string; line1: string; line2: string; city: string; state: string; postalCode: string } | null };
+  order: { id: string; number: string; status: string; currency: string; subtotalMinor: number; discountMinor: number; shippingMinor: number; totalMinor: number; promotionCode: string | null; shippingMethod: string | null; bundleDiscountMinor: number; name: string | null; email: string | null; phone: string | null; giftMessage: string | null; notes: string | null; createdAt: number; paidAt: number | null; address: { recipientName: string; line1: string; line2: string; city: string; state: string; postalCode: string } | null };
   items: { name: string; sku: string; size: string; colour: string; unitMinor: number; qty: number; lineMinor: number }[];
+  gifts: { id: string; bundleName: string; packagingName: string | null; message: string | null; recipientName: string | null }[];
+  shipments: { id: string; carrier: string | null; trackingNumber: string | null; trackingUrl: string | null; status: string; note: string | null }[];
   payments: { id: string; provider: string; reference: string; amountMinor: number; currency: string; status: string; verifiedAt: number | null; createdAt: number }[];
   events: { fromStatus: string | null; toStatus: string; note: string | null; at: number; actorEmail: string | null }[];
   allowedNext: string[];
@@ -24,6 +26,7 @@ export default function AdminOrderPage() {
   const [note, setNote] = useState("");
   const [paidNote, setPaidNote] = useState("");
   const [busy, setBusy] = useState(false);
+  const [sh, setSh] = useState({ carrier: "", tracking: "", url: "" });
   const load = useCallback(() => { api<Detail>(`/api/admin/orders/${id}`).then(setD).catch((e) => setMsg({ ok: false, text: errText(e) })); }, [id]);
   useEffect(load, [load]);
 
@@ -58,12 +61,30 @@ export default function AdminOrderPage() {
           </ul>
           <dl className="mt-3 space-y-1 text-sm">
             <div className="flex justify-between"><dt>Subtotal</dt><dd>{money(o.subtotalMinor)}</dd></div>
-            {o.discountMinor > 0 && <div className="flex justify-between"><dt>Discount {o.promotionCode}</dt><dd>−{money(o.discountMinor)}</dd></div>}
+            {o.bundleDiscountMinor > 0 && <div className="flex justify-between"><dt>Gift saving</dt><dd>−{money(o.bundleDiscountMinor)}</dd></div>}
+            {o.discountMinor - o.bundleDiscountMinor > 0 && <div className="flex justify-between"><dt>Discount {o.promotionCode}</dt><dd>−{money(o.discountMinor - o.bundleDiscountMinor)}</dd></div>}
             <div className="flex justify-between"><dt>Delivery</dt><dd>{money(o.shippingMinor)}</dd></div>
             <div className="flex justify-between border-t border-dashed border-gold pt-2 font-medium"><dt>Total</dt><dd>{money(o.totalMinor)}</dd></div>
           </dl>
         </div>
       </section>
+
+      {d.gifts.length > 0 && (
+        <section className="mt-8" aria-labelledby="gifts"><h2 id="gifts" className="!text-2xl">Gifts to pack</h2>
+          <ul className="mt-2 space-y-2 text-sm">{d.gifts.map((g) => <li key={g.id} className="border border-dashed border-gold p-3"><strong>{g.bundleName}</strong>{g.recipientName ? ` for ${g.recipientName}` : ""}{g.packagingName ? ` · packaging: ${g.packagingName}` : ""}{g.message && <span className="block">Card message: “{g.message}”</span>}</li>)}</ul>
+        </section>
+      )}
+      {["paid_verified", "fulfilling", "completed"].includes(o.status) && (
+        <section className="mt-8 max-w-xl" aria-labelledby="ship"><h2 id="ship" className="!text-2xl">Delivery{o.shippingMethod ? ` (${o.shippingMethod})` : ""}</h2>
+          <ul className="mt-2 space-y-2 text-sm">{d.shipments.map((s) => (
+            <li key={s.id} className="border border-dashed border-gold p-3"><strong>{s.status}</strong>{s.carrier ? ` · ${s.carrier}` : ""}{s.trackingNumber ? ` · ${s.trackingNumber}` : ""}{s.trackingUrl && <> · <a className="link-line" href={s.trackingUrl} target="_blank" rel="noopener noreferrer">Track</a></>}
+              <span className="mt-2 flex flex-wrap gap-2">{s.status === "preparing" && <button type="button" className="btn-ghost" disabled={busy} onClick={() => void run(() => api(`/api/admin/shipments/${s.id}`, { method: "PUT", body: { status: "shipped", carrier: s.carrier ?? undefined, trackingNumber: s.trackingNumber ?? undefined, trackingUrl: s.trackingUrl ?? undefined } }), "Marked as shipped.")}>Mark shipped</button>}{s.status === "shipped" && <button type="button" className="btn-ghost" disabled={busy} onClick={() => void run(() => api(`/api/admin/shipments/${s.id}`, { method: "PUT", body: { status: "delivered", carrier: s.carrier ?? undefined, trackingNumber: s.trackingNumber ?? undefined, trackingUrl: s.trackingUrl ?? undefined } }), "Marked as delivered.")}>Mark delivered</button>}</span></li>
+          ))}</ul>
+          <div className="mt-3 grid gap-3 sm:grid-cols-3"><FormField label="Carrier" value={sh.carrier} maxLength={60} onChange={(e) => setSh({ ...sh, carrier: e.target.value })} /><FormField label="Tracking number" value={sh.tracking} maxLength={60} onChange={(e) => setSh({ ...sh, tracking: e.target.value })} /><FormField label="Tracking link (https)" value={sh.url} onChange={(e) => setSh({ ...sh, url: e.target.value })} /></div>
+          <div className="mt-3 flex gap-3"><button type="button" className="btn-primary" disabled={busy} onClick={() => void run(async () => { await api(`/api/admin/orders/${id}/shipments`, { method: "POST", body: { carrier: sh.carrier || undefined, trackingNumber: sh.tracking || undefined, trackingUrl: sh.url || undefined, status: "shipped" } }); setSh({ carrier: "", tracking: "", url: "" }); }, "Shipment added and marked shipped.")}>Add as shipped</button>
+            <button type="button" className="btn-ghost" disabled={busy} onClick={() => void run(async () => { await api(`/api/admin/orders/${id}/shipments`, { method: "POST", body: { carrier: sh.carrier || undefined, trackingNumber: sh.tracking || undefined, trackingUrl: sh.url || undefined, status: "preparing" } }); setSh({ carrier: "", tracking: "", url: "" }); }, "Shipment added.")}>Add (not shipped yet)</button></div>
+        </section>
+      )}
 
       <section className="mt-10 max-w-xl space-y-4" aria-labelledby="act">
         <h2 id="act" className="!text-2xl">Actions</h2>
