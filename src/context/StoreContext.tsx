@@ -14,7 +14,17 @@ export interface CartLine {
   qty: number;
 }
 
+export interface GiftCartItem {
+  id: string; bundleId: string; bundleName: string; kind: string; selections: Record<string, string>;
+  packagingId: string | null; packagingName: string | null; message: string; recipientName: string;
+  /** What is inside, for display only. The server decides the real price at checkout. */
+  contents: string[]; estimateMinor: number;
+}
+
 interface StoreValue {
+  gifts: GiftCartItem[];
+  addGift: (g: Omit<GiftCartItem, "id">) => void;
+  removeGift: (id: string) => void;
   lines: CartLine[];
   count: number;
   addToCart: (variantId: string, qty?: number) => { ok: boolean; message: string };
@@ -29,6 +39,7 @@ interface StoreValue {
 const MAX_QTY = 10; // Real per-variant stock limits arrive with the database (Phase 3).
 const CART_KEY = "ms_cart_v1";
 const WISH_KEY = "ms_wishlist_v1";
+const GIFT_KEY = "ms_gifts_v1";
 
 const StoreContext = createContext<StoreValue | null>(null);
 
@@ -36,6 +47,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const { getVariant, status } = useCatalogue();
   const [items, setItems] = useState<CartItem[]>(() => loadJSON<CartItem[]>(CART_KEY, []));
   const [wishlist, setWishlist] = useState<string[]>(() => loadJSON<string[]>(WISH_KEY, []));
+  const [gifts, setGifts] = useState<GiftCartItem[]>(() => loadJSON<GiftCartItem[]>(GIFT_KEY, []));
+  useEffect(() => saveJSON(GIFT_KEY, gifts), [gifts]);
+  const addGift = useCallback((g: Omit<GiftCartItem, "id">) => setGifts((p) => (p.length >= 10 ? p : [...p, { ...g, id: Math.random().toString(36).slice(2, 10) }])), []);
+  const removeGift = useCallback((id: string) => setGifts((p) => p.filter((x) => x.id !== id)), []);
 
   useEffect(() => saveJSON(CART_KEY, items), [items]);
   useEffect(() => saveJSON(WISH_KEY, wishlist), [wishlist]);
@@ -77,7 +92,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     (variantId: string) => setItems((prev) => prev.filter((p) => p.variantId !== variantId)),
     [],
   );
-  const clearCart = useCallback(() => setItems([]), []);
+  const clearCart = useCallback(() => { setItems([]); setGifts([]); }, []);
 
   const toggleWishlist = useCallback(
     (slug: string) =>
@@ -86,9 +101,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   );
   const inWishlist = useCallback((slug: string) => wishlist.includes(slug), [wishlist]);
 
-  const count = useMemo(() => lines.reduce((n, l) => n + l.qty, 0), [lines]);
+  const count = useMemo(() => lines.reduce((n, l) => n + l.qty, 0) + gifts.length, [lines, gifts]);
 
   const value: StoreValue = {
+    gifts,
+    addGift,
+    removeGift,
     lines,
     count,
     addToCart,
