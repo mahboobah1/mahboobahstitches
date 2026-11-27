@@ -4,9 +4,14 @@ import { auditLog, overview } from "./routes/admin";
 import * as ord from "./routes/adminOrders";
 import * as co from "./routes/checkout";
 import { releaseExpired } from "./lib/orders";
+import { applySeo, robotsTxt, seoFor, sitemapXml } from "./lib/seo";
 import { cleanOrphanUploads } from "./lib/media";
 import * as bsp from "./routes/bespoke";
 import * as bk from "./routes/bookings";
+import * as gf from "./routes/gifts";
+import * as ins from "./routes/insights";
+import * as rv from "./routes/reviews";
+import * as sh from "./routes/shipping";
 import * as cat from "./routes/adminCatalogue";
 import * as cms from "./routes/adminContent";
 import { login, logout, me, register } from "./routes/auth";
@@ -17,7 +22,7 @@ type Params = Record<string, string>;
 type Handler = (env: Env, req: Request, params: Params) => Promise<Response> | Response;
 
 const routes: [string, string, Handler][] = [
-  ["GET", "/api/health", () => json({ ok: true, service: "mahboobah-stitches", phase: 5 })],
+  ["GET", "/api/health", () => json({ ok: true, service: "mahboobah-stitches", phase: 7 })],
   ["GET", "/api/auth/me", (e, r) => me(e, r)],
   ["POST", "/api/auth/register", (e, r) => register(e, r)],
   ["POST", "/api/auth/login", (e, r) => login(e, r)],
@@ -60,7 +65,42 @@ const routes: [string, string, Handler][] = [
   ["POST", "/api/bookings/:ref/cancel", bk.cancelBooking],
   ["POST", "/api/bookings/:ref/reschedule", bk.rescheduleBooking],
   ["GET", "/api/account/bookings", (e, r) => bk.accountBookings(e, r)],
+  // shipping and gifts (public)
+  ["GET", "/api/shipping/countries", (e) => sh.publicCountries(e)],
+  ["GET", "/api/shipping/options", (e, r) => sh.publicOptions(e, r)],
+  ["GET", "/api/gifts", (e) => gf.publicGifts(e)],
+  // reviews, newsletter (public)
+  ["GET", "/api/products/:slug/reviews", rv.productReviews],
+  ["POST", "/api/reviews", (e, r) => rv.submitReview(e, r)],
+  ["GET", "/api/reviews/featured", (e) => rv.featuredReviews(e)],
+  ["POST", "/api/newsletter", (e, r) => ins.subscribe(e, r)],
   // admin
+  ["GET", "/api/admin/analytics", (e, r) => ins.analytics(e, r)],
+  ["GET", "/api/admin/customers", (e, r) => ins.listCustomers(e, r)],
+  ["GET", "/api/admin/customers/:id", ins.getCustomer],
+  ["GET", "/api/admin/export/orders.csv", (e, r) => ins.exportOrders(e, r)],
+  ["GET", "/api/admin/export/customers.csv", (e, r) => ins.exportCustomers(e, r)],
+  ["GET", "/api/admin/export/subscribers.csv", (e, r) => ins.exportSubscribers(e, r)],
+  ["GET", "/api/admin/subscribers", (e, r) => ins.listSubscribers(e, r)],
+  ["DELETE", "/api/admin/subscribers/:id", ins.removeSubscriber],
+  ["GET", "/api/admin/reviews", (e, r) => rv.adminReviews(e, r)],
+  ["PUT", "/api/admin/reviews/:id", rv.moderateReview],
+  ["GET", "/api/admin/shipping", (e, r) => sh.adminShipping(e, r)],
+  ["POST", "/api/admin/shipping/zones", (e, r) => sh.createZone(e, r)],
+  ["PUT", "/api/admin/shipping/zones/:id", sh.updateZone],
+  ["DELETE", "/api/admin/shipping/zones/:id", sh.deleteZone],
+  ["POST", "/api/admin/shipping/zones/:id/rates", sh.createRate],
+  ["PUT", "/api/admin/shipping/rates/:id", sh.updateRate],
+  ["DELETE", "/api/admin/shipping/rates/:id", sh.deleteRate],
+  ["POST", "/api/admin/orders/:id/shipments", sh.createShipment],
+  ["PUT", "/api/admin/shipments/:id", sh.updateShipment],
+  ["GET", "/api/admin/gifts", (e, r) => gf.adminGifts(e, r)],
+  ["POST", "/api/admin/gifts", (e, r) => gf.createBundle(e, r)],
+  ["PUT", "/api/admin/gifts/:id", gf.updateBundle],
+  ["PUT", "/api/admin/gifts/:id/items", gf.setItems],
+  ["PUT", "/api/admin/gifts/:id/slots", gf.setSlots],
+  ["POST", "/api/admin/gift-packaging", (e, r) => gf.createPackaging(e, r)],
+  ["PUT", "/api/admin/gift-packaging/:id", gf.updatePackaging],
   ["GET", "/api/admin/bespoke", (e, r) => bsp.adminList(e, r)],
   ["GET", "/api/admin/bespoke/:id", bsp.adminGet],
   ["PUT", "/api/admin/bespoke/:id/status", bsp.adminStatus],
@@ -154,7 +194,21 @@ export default {
   },
   async fetch(req: Request, env: Env): Promise<Response> {
     const url = new URL(req.url);
-    if (!url.pathname.startsWith("/api/")) return env.ASSETS.fetch(req);
+    if (!url.pathname.startsWith("/api/")) {
+      if (req.method !== "GET") return env.ASSETS.fetch(req);
+      if (url.pathname === "/sitemap.xml") return new Response(await sitemapXml(env, url.origin), { headers: { "content-type": "application/xml; charset=utf-8", "cache-control": "public, max-age=300" } });
+      if (url.pathname === "/robots.txt") return new Response(robotsTxt(url.origin), { headers: { "content-type": "text/plain; charset=utf-8", "cache-control": "public, max-age=300" } });
+      const res = await env.ASSETS.fetch(req);
+      if (!(res.headers.get("content-type") ?? "").includes("text/html")) return res;
+      // Fill in share/search tags for product, collection, journal and info pages. Any problem falls back to the plain page.
+      try {
+        const seo = await seoFor(env, url);
+        return seo ? applySeo(res, seo) : res;
+      } catch (e) {
+        console.error("seo failed", e);
+        return res;
+      }
+    }
     try {
       return await route(req, env, url.pathname);
     } catch (err) {
