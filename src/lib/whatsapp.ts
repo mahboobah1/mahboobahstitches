@@ -36,7 +36,9 @@ export interface SummaryLine {
   qty: number;
 }
 
-export function cartSummaryLink(lines: SummaryLine[]): string {
+export interface SummaryGift { bundleName: string; contents: string[]; packagingName: string | null; message: string }
+
+export function cartSummaryLink(lines: SummaryLine[], gifts: SummaryGift[] = []): string {
   const body = lines.map(
     (l, i) =>
       `${i + 1}. ${l.product.name} | ${[l.variant.size, l.variant.colour].filter(Boolean).join(" ") || "Standard"} | Ref ${l.variant.sku} | Qty ${l.qty} | ${formatMoney(l.variant.priceMinor, l.variant.currency)}`,
@@ -44,6 +46,7 @@ export function cartSummaryLink(lines: SummaryLine[]): string {
   const msg = [
     `Hello ${site.name}, I would like to place an order:`,
     ...body,
+    ...gifts.map((g, i) => `Gift ${i + 1}: ${g.bundleName} (${g.contents.join("; ")})${g.packagingName ? `, packaging: ${g.packagingName}` : ""}${g.message ? `, message: "${g.message}"` : ""}`),
     "",
     "Please confirm availability, total and delivery. (This message is an enquiry, not a paid order.)",
   ].join("\n");
