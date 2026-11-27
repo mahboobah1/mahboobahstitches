@@ -35,16 +35,18 @@ export async function getOrderAdmin(env: Env, req: Request, p: Params): Promise<
   const id = v.id(p.id);
   const o = await env.DB.prepare(
     `SELECT id, order_number AS number, status, currency, subtotal_minor AS subtotalMinor, discount_minor AS discountMinor, shipping_minor AS shippingMinor, total_minor AS totalMinor,
-            promotion_code AS promotionCode, guest_name AS name, guest_email AS email, phone, shipping_address_json AS address, gift_message AS giftMessage, notes, created_at AS createdAt, paid_at AS paidAt, placed_via AS placedVia
+            promotion_code AS promotionCode, shipping_method AS shippingMethod, bundle_discount_minor AS bundleDiscountMinor, guest_name AS name, guest_email AS email, phone, shipping_address_json AS address, gift_message AS giftMessage, notes, created_at AS createdAt, paid_at AS paidAt, placed_via AS placedVia
        FROM orders WHERE id=?1`,
   ).bind(id).first<Record<string, unknown> & { address: string | null }>();
   if (!o) throw new HttpError(404, "Order not found.");
-  const [items, pays, events] = await Promise.all([
-    env.DB.prepare("SELECT product_name AS name, variant_sku AS sku, size, colour, unit_price_minor AS unitMinor, qty, line_total_minor AS lineMinor FROM order_items WHERE order_id=?1 ORDER BY rowid").bind(id).all(),
+  const [items, pays, events, gifts, shipments] = await Promise.all([
+    env.DB.prepare("SELECT product_name AS name, variant_sku AS sku, size, colour, unit_price_minor AS unitMinor, qty, line_total_minor AS lineMinor, gift_id AS giftId FROM order_items WHERE order_id=?1 ORDER BY rowid").bind(id).all(),
     env.DB.prepare("SELECT id, provider, reference, amount_minor AS amountMinor, currency, status, verified_at AS verifiedAt, created_at AS createdAt FROM payments WHERE order_id=?1 ORDER BY rowid").bind(id).all(),
     env.DB.prepare("SELECT e.from_status AS fromStatus, e.to_status AS toStatus, e.note, e.created_at AS at, u.email AS actorEmail FROM order_events e LEFT JOIN users u ON u.id = e.actor_user_id WHERE e.order_id=?1 ORDER BY e.id").bind(id).all(),
+    env.DB.prepare("SELECT id, bundle_name AS bundleName, kind, packaging_name AS packagingName, packaging_minor AS packagingMinor, message, recipient_name AS recipientName, saving_minor AS savingMinor FROM order_gifts WHERE order_id=?1 ORDER BY rowid").bind(id).all(),
+    env.DB.prepare("SELECT id, carrier, tracking_number AS trackingNumber, tracking_url AS trackingUrl, status, note, shipped_at AS shippedAt, delivered_at AS deliveredAt FROM shipments WHERE order_id=?1 ORDER BY created_at, rowid").bind(id).all(),
   ]);
-  return json({ order: { ...o, address: o.address ? JSON.parse(o.address) : null }, items: items.results, payments: pays.results, events: events.results, allowedNext: NEXT[String(o.status)] ?? [] });
+  return json({ order: { ...o, address: o.address ? JSON.parse(o.address) : null }, items: items.results, gifts: gifts.results, shipments: shipments.results, payments: pays.results, events: events.results, allowedNext: NEXT[String(o.status)] ?? [] });
 }
 
 export async function setOrderStatus(env: Env, req: Request, p: Params): Promise<Response> {

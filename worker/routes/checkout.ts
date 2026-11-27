@@ -3,6 +3,7 @@ import { audit } from "../lib/audit";
 import { safeEqual, sha256Hex } from "../lib/crypto";
 import { HttpError, assertSameOrigin, clientIp, json, readJson } from "../lib/http";
 import { cancelUnpaidOrder, createOrder, getShop, newReference, quote, releaseExpired, settlePayment, type Quote } from "../lib/orders";
+import { chooseRate } from "../lib/shipping";
 import { getProvider } from "../lib/paystack";
 import { can } from "../lib/permissions";
 import { rateLimit } from "../lib/ratelimit";
@@ -18,17 +19,24 @@ export async function checkoutConfig(env: Env): Promise<Response> {
 }
 
 const publicQuote = (q: Quote) => ({
-  currency: q.currency, subtotalMinor: q.subtotalMinor, discountMinor: q.discountMinor, deliveryMinor: q.deliveryMinor, totalMinor: q.totalMinor, promoCode: q.promoCode,
-  lines: q.lines.map((l) => ({ variantId: l.variantId, name: l.productName, size: l.size, colour: l.colour, unitMinor: l.unitMinor, qty: l.qty })),
+  currency: q.currency, subtotalMinor: q.subtotalMinor, discountMinor: q.discountMinor, bundleDiscountMinor: q.bundleDiscountMinor, deliveryMinor: q.deliveryMinor, totalMinor: q.totalMinor, promoCode: q.promoCode,
+  lines: q.lines.map((l) => ({ variantId: l.variantId, name: l.productName, size: l.size, colour: l.colour, unitMinor: l.unitMinor, qty: l.qty, giftIndex: l.giftIndex })),
+  gifts: q.gifts,
   issues: q.issues,
+  shipping: { configured: q.shipping.configured, selectedId: q.shipping.selected?.id ?? null, options: q.shipping.options },
 });
+
+const shipFrom = (b: Record<string, unknown>) => {
+  const sh = (typeof b.shipping === "object" && b.shipping !== null ? b.shipping : {}) as Record<string, unknown>;
+  return { country: typeof sh.country === "string" ? sh.country : undefined, state: typeof sh.state === "string" ? sh.state : undefined, rateId: sh.rateId };
+};
 
 /** Prices a cart on the server (used to show the checkout summary). Nothing is created. */
 export async function quoteRoute(env: Env, req: Request): Promise<Response> {
   assertSameOrigin(req);
   await rateLimit(env, `quote:ip:${clientIp(req)}`, 60, 600);
   const b = await readJson(req);
-  return json(publicQuote(await quote(env, b.items, b.promoCode)));
+  return json(publicQuote(await quote(env, b.items, b.promoCode, { gifts: b.gifts, ship: shipFrom(b) })));
 }
 
 export async function placeOrder(env: Env, req: Request): Promise<Response> {
@@ -38,22 +46,28 @@ export async function placeOrder(env: Env, req: Request): Promise<Response> {
   const provider = getProvider(env);
   if (!provider) throw new HttpError(503, "Online payment is not switched on yet. Please order through WhatsApp.");
   await releaseExpired(env);
-  const b = await readJson(req);
-  const q = await quote(env, b.items, b.promoCode);
+  const b = await readJson(req, 40_000);
+  const a = (typeof b.address === "object" && b.address !== null ? b.address : {}) as Record<string, unknown>;
+  const country = (typeof a.countryCode === "string" && a.countryCode ? a.countryCode : "NG").toUpperCase();
+  if (!/^[A-Z]{2}$/.test(country)) throw new HttpError(422, "Choose a country.");
+  const stateRaw = typeof a.state === "string" ? a.state : "";
+  const q = await quote(env, b.items, b.promoCode, { gifts: b.gifts, ship: { country, state: stateRaw, rateId: b.shippingRateId } });
   if (q.issues.length > 0 || q.lines.length === 0) return json({ error: q.issues[0]?.message ?? "Your cart is empty.", issues: q.issues }, 409);
+  if (q.shipping.configured) {
+    await chooseRate(env, country, stateRaw, q.subtotalMinor - q.discountMinor, b.shippingRateId); // throws a clear message if not deliverable
+  } else if (country !== "NG") {
+    throw new HttpError(422, "Online checkout currently delivers within Nigeria. For other countries, please contact us on WhatsApp.");
+  }
 
   const name = v.text(b.name, "Your name", 2, 80);
   const email = v.email(b.email);
   const phone = v.requiredPhone(b.phone);
-  const a = (typeof b.address === "object" && b.address !== null ? b.address : {}) as Record<string, unknown>;
-  const country = typeof a.countryCode === "string" ? a.countryCode.toUpperCase() : "NG";
-  if (country !== "NG") throw new HttpError(422, "Online checkout currently delivers within Nigeria. For other countries, please contact us on WhatsApp.");
   const address = {
     recipientName: v.optText(a.recipientName, "Recipient name", 80) ?? name,
     line1: v.text(a.line1, "Address", 3, 120),
     line2: v.optText(a.line2, "Address line 2", 120) ?? "",
     city: v.text(a.city, "City or town", 2, 80),
-    state: v.text(a.state, "State", 2, 60),
+    state: country === "NG" ? v.text(a.state, "State", 2, 60) : (v.optText(a.state, "State or region", 60) ?? ""),
     postalCode: v.optText(a.postalCode, "Postal code", 20) ?? "",
     countryCode: country,
   };
@@ -63,7 +77,7 @@ export async function placeOrder(env: Env, req: Request): Promise<Response> {
   const order = await createOrder(env, {
     q, userId: user?.id ?? null, name, email, phone, address,
     giftMessage: v.optText(b.giftMessage, "Gift message", 300), notes: v.optText(b.notes, "Note", 500),
-    provider: provider.name, reference, reservationMinutes: shop.reservationMinutes,
+    provider: provider.name, reference, reservationMinutes: shop.reservationMinutes, shippingMethod: q.shipping.selected?.name ?? null,
   });
   try {
     const origin = new URL(req.url).origin;
@@ -84,7 +98,7 @@ export async function placeOrder(env: Env, req: Request): Promise<Response> {
 interface OrderRow {
   id: string; order_number: string; user_id: string | null; guest_email: string | null; guest_name: string | null; phone: string | null; status: string; currency: string;
   subtotal_minor: number; discount_minor: number; shipping_minor: number; total_minor: number; promotion_code: string | null; shipping_address_json: string | null;
-  gift_message: string | null; created_at: number; paid_at: number | null; public_token_hash: string | null;
+  gift_message: string | null; created_at: number; paid_at: number | null; public_token_hash: string | null; shipping_method: string | null; bundle_discount_minor: number;
 }
 
 async function authorizeOrder(env: Env, req: Request, number: string, token: string | null): Promise<OrderRow> {
@@ -104,18 +118,22 @@ async function authorizeOrder(env: Env, req: Request, number: string, token: str
 }
 
 async function orderView(env: Env, o: OrderRow): Promise<Response> {
-  const [items, pay, events] = await Promise.all([
-    env.DB.prepare("SELECT product_name AS name, variant_sku AS sku, size, colour, unit_price_minor AS unitMinor, qty, line_total_minor AS lineMinor FROM order_items WHERE order_id=?1 ORDER BY rowid").bind(o.id).all(),
+  const [items, pay, events, gifts, shipments] = await Promise.all([
+    env.DB.prepare("SELECT product_name AS name, variant_sku AS sku, size, colour, unit_price_minor AS unitMinor, qty, line_total_minor AS lineMinor, gift_id AS giftId FROM order_items WHERE order_id=?1 ORDER BY rowid").bind(o.id).all(),
     env.DB.prepare("SELECT status, provider, reference FROM payments WHERE order_id=?1 ORDER BY rowid DESC LIMIT 1").bind(o.id).first<{ status: string; provider: string; reference: string }>(),
     env.DB.prepare("SELECT to_status AS status, created_at AS at FROM order_events WHERE order_id=?1 ORDER BY id").bind(o.id).all(),
+    env.DB.prepare("SELECT id, bundle_name AS bundleName, kind, packaging_name AS packagingName, packaging_minor AS packagingMinor, message, recipient_name AS recipientName, saving_minor AS savingMinor FROM order_gifts WHERE order_id=?1 ORDER BY rowid").bind(o.id).all(),
+    env.DB.prepare("SELECT carrier, tracking_number AS trackingNumber, tracking_url AS trackingUrl, status, shipped_at AS shippedAt, delivered_at AS deliveredAt FROM shipments WHERE order_id=?1 ORDER BY created_at, rowid").bind(o.id).all(),
   ]);
   return json({
     order: {
       number: o.order_number, status: o.status, currency: o.currency, subtotalMinor: o.subtotal_minor, discountMinor: o.discount_minor, shippingMinor: o.shipping_minor,
-      totalMinor: o.total_minor, promotionCode: o.promotion_code, createdAt: o.created_at, paidAt: o.paid_at, giftMessage: o.gift_message,
+      totalMinor: o.total_minor, bundleDiscountMinor: o.bundle_discount_minor, shippingMethod: o.shipping_method, promotionCode: o.promotion_code, createdAt: o.created_at, paidAt: o.paid_at, giftMessage: o.gift_message,
       customer: { name: o.guest_name, email: o.guest_email, phone: o.phone }, address: o.shipping_address_json ? JSON.parse(o.shipping_address_json) : null,
     },
     items: items.results,
+    gifts: gifts.results,
+    shipments: shipments.results,
     payment: pay ? { status: pay.status, provider: pay.provider } : null,
     timeline: events.results,
   });
