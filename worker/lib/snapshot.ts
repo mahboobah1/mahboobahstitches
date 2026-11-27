@@ -11,7 +11,7 @@ interface PRow { id: string; slug: string; name: string; description: string | n
 interface VRow { id: string; product_id: string; sku: string; size: string; colour: string; price_minor: number; currency: string; track_stock: number | null; on_hand: number | null; reserved: number | null; allow_backorder: number | null }
 
 export async function buildCatalogue(env: Env): Promise<string> {
-  const [cols, cats, prods, vars, imgs] = await Promise.all([
+  const [cols, cats, prods, vars, imgs, ratings] = await Promise.all([
     env.DB.prepare("SELECT id, slug, name, blurb, image_url FROM collections WHERE is_active = 1 ORDER BY sort_order, name").all<{ id: string; slug: string; name: string; blurb: string | null; image_url: string | null }>(),
     env.DB.prepare("SELECT c.slug AS collection_slug, cat.slug, cat.name FROM categories cat JOIN collections c ON c.id = cat.collection_id WHERE c.is_active = 1 ORDER BY cat.sort_order, cat.name").all<{ collection_slug: string; slug: string; name: string }>(),
     env.DB.prepare(
@@ -30,7 +30,9 @@ export async function buildCatalogue(env: Env): Promise<string> {
       `SELECT i.product_id, i.url, i.alt_text FROM product_images i JOIN products p ON p.id = i.product_id AND p.status = 'active'
         ORDER BY i.product_id, i.sort_order, i.rowid`,
     ).all<{ product_id: string; url: string; alt_text: string }>(),
+    env.DB.prepare("SELECT product_id, COUNT(*) AS c, AVG(rating) AS a FROM reviews WHERE status='approved' GROUP BY product_id").all<{ product_id: string; c: number; a: number }>(),
   ]);
+  const ratingBy = new Map(ratings.results.map((r) => [r.product_id, { count: r.c, average: Math.round(r.a * 10) / 10 }]));
 
   const variantsBy = new Map<string, unknown[]>();
   for (const v of vars.results) {
@@ -52,7 +54,7 @@ export async function buildCatalogue(env: Env): Promise<string> {
         id: p.id, slug: p.slug, name: p.name, description: p.description ?? "", collectionSlug: p.collection_slug,
         collectionName: p.collection_name, subcategory: p.subcategory ?? "", type: p.product_type,
         isNew: p.is_new === 1, isBestseller: p.is_bestseller === 1, fulfilmentInfo: p.fulfilment_info ?? "",
-        shippingInfo: p.shipping_info ?? "", images: imagesBy.get(p.id) ?? [], variants: variantsBy.get(p.id) ?? [],
+        shippingInfo: p.shipping_info ?? "", images: imagesBy.get(p.id) ?? [], variants: variantsBy.get(p.id) ?? [], rating: ratingBy.get(p.id) ?? null,
       }))
       .filter((p) => p.variants.length > 0);
 

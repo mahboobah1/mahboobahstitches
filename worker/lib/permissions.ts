@@ -13,19 +13,20 @@ export type Permission =
   | "content:write"
   | "bookings:manage"
   | "bespoke:manage"
-  | "analytics:read";
+  | "analytics:read"
+  | "reviews:manage";
 
 const ALL: Permission[] = [
   "admin:access", "audit:read", "staff:manage", "settings:write", "products:write", "inventory:write",
-  "orders:manage", "content:write", "bookings:manage", "bespoke:manage", "analytics:read",
+  "orders:manage", "content:write", "bookings:manage", "bespoke:manage", "analytics:read", "reviews:manage",
 ];
 
 /** Server-side source of truth. The website only uses this list to decide what to show. */
 const MATRIX: Record<Role, Permission[]> = {
   OWNER: ALL,
-  MANAGER: ["admin:access", "products:write", "inventory:write", "orders:manage", "bookings:manage", "bespoke:manage", "analytics:read"],
+  MANAGER: ["admin:access", "products:write", "inventory:write", "orders:manage", "bookings:manage", "bespoke:manage", "analytics:read", "reviews:manage"],
   INVENTORY_MANAGER: ["admin:access", "inventory:write", "products:write"],
-  CONTENT_MANAGER: ["admin:access", "content:write"],
+  CONTENT_MANAGER: ["admin:access", "content:write", "reviews:manage"],
   CUSTOMER: [],
 };
 

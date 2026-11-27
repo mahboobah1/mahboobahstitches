@@ -2,23 +2,32 @@ import type { Env } from "../types";
 import { audit } from "./audit";
 import { randomToken, sha256Hex } from "./crypto";
 import { HttpError } from "./http";
+import { expandGift, parseGifts, type Expanded } from "./gifts";
 import type { PaymentProvider } from "./paystack";
+import { ratesFor, zonesConfigured, type RateOption } from "./shipping";
 
 const MAX_QTY = 10;
 const MAX_LINES = 30;
 const now = () => Math.floor(Date.now() / 1000);
 
 export interface PricedLine {
-  variantId: string; productName: string; sku: string; size: string; colour: string;
+  variantId: string | null; productName: string; sku: string; size: string; colour: string;
   unitMinor: number; qty: number; currency: string;
   /** true when stock is counted and we must hold it while the customer pays */
   reserve: boolean;
+  /** which gift (index in Quote.gifts) this line belongs to; null for ordinary items */
+  giftIndex: number | null;
 }
 export interface Issue { variantId: string | null; message: string }
+export interface GiftGroup {
+  index: number; bundleId: string; bundleName: string; kind: string; packagingName: string | null; packagingMinor: number;
+  message: string | null; recipientName: string | null; savingMinor: number; imageUrl: string | null;
+}
 export interface Quote {
   lines: PricedLine[]; issues: Issue[]; currency: string;
-  subtotalMinor: number; discountMinor: number; deliveryMinor: number; totalMinor: number;
-  promoCode: string | null;
+  subtotalMinor: number; discountMinor: number; bundleDiscountMinor: number; deliveryMinor: number; totalMinor: number;
+  promoCode: string | null; gifts: GiftGroup[];
+  shipping: { configured: boolean; options: RateOption[]; selected: RateOption | null };
 }
 export interface Shop { deliveryFeeMinor: number; deliveryNote: string; reservationMinutes: number }
 
@@ -41,7 +50,8 @@ interface VRow {
   name: string; status: string; track_stock: number | null; on_hand: number | null; reserved: number | null; allow_backorder: number | null;
 }
 
-export function parseItems(raw: unknown): { variantId: string; qty: number }[] {
+export function parseItems(raw: unknown, allowEmpty = false): { variantId: string; qty: number }[] {
+  if (allowEmpty && (raw === undefined || raw === null || (Array.isArray(raw) && raw.length === 0))) return [];
   if (!Array.isArray(raw) || raw.length === 0) throw new HttpError(422, "Your cart is empty.");
   if (raw.length > MAX_LINES) throw new HttpError(422, "Too many different items in one order.");
   const merged = new Map<string, number>();
@@ -77,7 +87,7 @@ export async function priceLines(env: Env, items: { variantId: string; qty: numb
       const free = (r.on_hand ?? 0) - (r.reserved ?? 0);
       if (free < it.qty) { issues.push({ variantId: r.id, message: free <= 0 ? `${label} is sold out.` : `Only ${free} of ${label} left.` }); continue; }
     }
-    lines.push({ variantId: r.id, productName: r.name, sku: r.sku, size: r.size, colour: r.colour, unitMinor: r.price_minor, qty: it.qty, currency: r.currency, reserve });
+    lines.push({ variantId: r.id, productName: r.name, sku: r.sku, size: r.size, colour: r.colour, unitMinor: r.price_minor, qty: it.qty, currency: r.currency, reserve, giftIndex: null });
   }
   return { lines, issues };
 }
@@ -98,22 +108,72 @@ export async function evaluatePromo(env: Env, code: string, subtotal: number, cu
   return { code: p.code, discountMinor: Math.max(0, Math.min(off, subtotal)) };
 }
 
-export async function quote(env: Env, rawItems: unknown, promoCode: unknown): Promise<Quote> {
-  const { lines, issues } = await priceLines(env, parseItems(rawItems));
+export interface ShipInput { country?: string; state?: string; rateId?: unknown }
+
+/**
+ * Prices a whole basket on the server: ordinary items, gifts (expanded into their component products, so component stock
+ * is used) and delivery. Nothing the browser says about money is trusted.
+ */
+export async function quote(env: Env, rawItems: unknown, promoCode: unknown, opts: { gifts?: unknown; ship?: ShipInput } = {}): Promise<Quote> {
+  const giftInputs = parseGifts(opts.gifts);
+  const items = parseItems(rawItems, giftInputs.length > 0);
+  const issues: Issue[] = [];
+  const expanded: (Expanded | null)[] = [];
+  for (const g of giftInputs) {
+    try { expanded.push(await expandGift(env, g)); } catch (e) { if (e instanceof HttpError && e.status === 409) { issues.push({ variantId: null, message: e.message }); expanded.push(null); } else throw e; }
+  }
+  // One stock check per product across the ordinary items AND every gift component.
+  const merged = new Map<string, number>();
+  for (const it of items) merged.set(it.variantId, (merged.get(it.variantId) ?? 0) + it.qty);
+  for (const g of expanded) if (g) for (const c of g.components) merged.set(c.variantId, (merged.get(c.variantId) ?? 0) + c.qty);
+  const priced = merged.size ? await priceLines(env, [...merged].map(([variantId, qty]) => ({ variantId, qty }))) : { lines: [] as PricedLine[], issues: [] as Issue[] };
+  issues.push(...priced.issues);
+  const byVar = new Map(priced.lines.map((l) => [l.variantId as string, l]));
+
+  const lines: PricedLine[] = [];
+  for (const it of items) { const pl = byVar.get(it.variantId); if (pl) lines.push({ ...pl, qty: it.qty, giftIndex: null }); }
+  const gifts: GiftGroup[] = [];
+  expanded.forEach((g, i) => {
+    if (!g) return;
+    let comp = 0;
+    for (const c of g.components) { const pl = byVar.get(c.variantId); if (pl) { lines.push({ ...pl, qty: c.qty, giftIndex: i }); comp += pl.unitMinor * c.qty; } }
+    if (g.packaging) lines.push({ variantId: null, productName: `Gift packaging: ${g.packaging.name}`, sku: `PKG-${g.packaging.id}`.slice(0, 40), size: "", colour: "", unitMinor: g.packaging.priceMinor, qty: 1, currency: lines[0]?.currency ?? "NGN", reserve: false, giftIndex: i });
+    gifts.push({ index: i, bundleId: g.input.bundleId, bundleName: g.bundleName, kind: g.kind, packagingName: g.packaging?.name ?? null, packagingMinor: g.packaging?.priceMinor ?? 0, message: g.input.message, recipientName: g.input.recipientName, savingMinor: Math.floor((comp * g.discountPercent) / 100), imageUrl: g.imageUrl });
+  });
+  if (lines.length === 0 && issues.length === 0) throw new HttpError(422, "Your cart is empty.");
   const currencies = new Set(lines.map((l) => l.currency));
   if (currencies.size > 1) issues.push({ variantId: null, message: "Items priced in different currencies cannot be ordered together." });
   const currency = lines[0]?.currency ?? "NGN";
   const subtotalMinor = lines.reduce((s, l) => s + l.unitMinor * l.qty, 0);
-  let discountMinor = 0;
+  const bundleDiscountMinor = gifts.reduce((s, g) => s + g.savingMinor, 0);
+  let promoDiscount = 0;
   let code: string | null = null;
   if (typeof promoCode === "string" && promoCode.trim() && lines.length) {
-    const r = await evaluatePromo(env, promoCode.trim(), subtotalMinor, currency);
-    discountMinor = r.discountMinor;
+    const r = await evaluatePromo(env, promoCode.trim(), subtotalMinor - bundleDiscountMinor, currency);
+    promoDiscount = r.discountMinor;
     code = r.code;
   }
-  const shop = await getShop(env);
-  const deliveryMinor = lines.length ? shop.deliveryFeeMinor : 0;
-  return { lines, issues, currency, subtotalMinor, discountMinor, deliveryMinor, totalMinor: subtotalMinor - discountMinor + deliveryMinor, promoCode: code };
+  const afterDiscount = subtotalMinor - bundleDiscountMinor - promoDiscount;
+  const configured = await zonesConfigured(env);
+  let options: RateOption[] = [];
+  let selected: RateOption | null = null;
+  let deliveryMinor = 0;
+  if (lines.length) {
+    if (configured) {
+      const country = (opts.ship?.country ?? "").toUpperCase();
+      if (country) {
+        options = await ratesFor(env, country, opts.ship?.state ?? "", afterDiscount);
+        selected = options.find((o) => o.id === opts.ship?.rateId) ?? null;
+        deliveryMinor = selected?.priceMinor ?? 0;
+      }
+    } else {
+      deliveryMinor = (await getShop(env)).deliveryFeeMinor;
+    }
+  }
+  return {
+    lines, issues, currency, subtotalMinor, bundleDiscountMinor, discountMinor: bundleDiscountMinor + promoDiscount, deliveryMinor,
+    totalMinor: afterDiscount + deliveryMinor, promoCode: code, gifts, shipping: { configured, options, selected },
+  };
 }
 
 /* ---------------- creating an order and holding stock ---------------- */
@@ -124,7 +184,7 @@ export const newReference = (num: string) => `${num}-${randomToken(5)}`;
 
 export interface NewOrder {
   q: Quote; userId: string | null; name: string; email: string; phone: string; address: Record<string, string>;
-  giftMessage: string | null; notes: string | null; provider: string; reference: string; reservationMinutes: number;
+  giftMessage: string | null; notes: string | null; provider: string; reference: string; reservationMinutes: number; shippingMethod: string | null;
 }
 
 /**
@@ -140,20 +200,25 @@ export async function createOrder(env: Env, o: NewOrder): Promise<{ orderId: str
   for (let attempt = 0; attempt < 5; attempt++) {
     const orderId = crypto.randomUUID();
     const num = orderNumber();
+    const giftIds = o.q.gifts.map(() => crypto.randomUUID());
     const stmts = [
       env.DB.prepare(
         `INSERT INTO orders (id, order_number, user_id, guest_email, guest_name, phone, status, placed_via, currency, subtotal_minor, discount_minor,
-                             shipping_minor, total_minor, promotion_code, shipping_address_json, gift_message, notes, public_token_hash)
-         VALUES (?1,?2,?3,?4,?5,?6,'unpaid','web',?7,?8,?9,?10,?11,?12,?13,?14,?15,?16)`,
-      ).bind(orderId, num, o.userId, o.email, o.name, o.phone, o.q.currency, o.q.subtotalMinor, o.q.discountMinor, o.q.deliveryMinor, o.q.totalMinor, o.q.promoCode, JSON.stringify(o.address), o.giftMessage, o.notes, tokenHash),
+                             shipping_minor, total_minor, promotion_code, shipping_address_json, gift_message, notes, public_token_hash, shipping_method, bundle_discount_minor)
+         VALUES (?1,?2,?3,?4,?5,?6,'unpaid','web',?7,?8,?9,?10,?11,?12,?13,?14,?15,?16,?17,?18)`,
+      ).bind(orderId, num, o.userId, o.email, o.name, o.phone, o.q.currency, o.q.subtotalMinor, o.q.discountMinor, o.q.deliveryMinor, o.q.totalMinor, o.q.promoCode, JSON.stringify(o.address), o.giftMessage, o.notes, tokenHash, o.shippingMethod, o.q.bundleDiscountMinor),
     ];
+    o.q.gifts.forEach((g, i) => {
+      stmts.push(env.DB.prepare("INSERT INTO order_gifts (id, order_id, bundle_id, bundle_name, kind, packaging_name, packaging_minor, message, recipient_name, saving_minor) VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10)")
+        .bind(giftIds[i], orderId, g.bundleId, g.bundleName, g.kind, g.packagingName, g.packagingMinor, g.message, g.recipientName, g.savingMinor));
+    });
     for (const l of o.q.lines) {
       stmts.push(
         env.DB.prepare(
-          "INSERT INTO order_items (id, order_id, variant_id, product_name, variant_sku, size, colour, unit_price_minor, qty, line_total_minor, currency) VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11)",
-        ).bind(crypto.randomUUID(), orderId, l.variantId, l.productName, l.sku, l.size, l.colour, l.unitMinor, l.qty, l.unitMinor * l.qty, l.currency),
+          "INSERT INTO order_items (id, order_id, variant_id, product_name, variant_sku, size, colour, unit_price_minor, qty, line_total_minor, currency, gift_id) VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,?12)",
+        ).bind(crypto.randomUUID(), orderId, l.variantId, l.productName, l.sku, l.size, l.colour, l.unitMinor, l.qty, l.unitMinor * l.qty, l.currency, l.giftIndex === null ? null : giftIds[l.giftIndex]),
       );
-      if (l.reserve) {
+      if (l.reserve && l.variantId) {
         stmts.push(
           env.DB.prepare("INSERT INTO stock_reservations (id, variant_id, order_id, qty, status, expires_at) VALUES (?1,?2,?3,?4,'active',?5)").bind(crypto.randomUUID(), l.variantId, orderId, l.qty, expires),
           env.DB.prepare("UPDATE inventory SET reserved = reserved + ?2, updated_at = CAST(strftime('%s','now') AS INTEGER) WHERE variant_id = ?1").bind(l.variantId, l.qty),
