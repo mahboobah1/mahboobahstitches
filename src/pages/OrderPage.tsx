@@ -9,8 +9,10 @@ import { usePageMeta } from "../lib/usePageMeta";
 import { generalEnquiryLink } from "../lib/whatsapp";
 
 interface View {
-  order: { number: string; status: string; currency: string; subtotalMinor: number; discountMinor: number; shippingMinor: number; totalMinor: number; promotionCode: string | null; createdAt: number; paidAt: number | null; giftMessage: string | null; customer: { name: string | null; email: string | null }; address: { recipientName: string; line1: string; line2: string; city: string; state: string; postalCode: string } | null };
-  items: { name: string; sku: string; size: string; colour: string; unitMinor: number; qty: number; lineMinor: number }[];
+  order: { number: string; status: string; currency: string; subtotalMinor: number; discountMinor: number; shippingMinor: number; totalMinor: number; promotionCode: string | null; bundleDiscountMinor?: number; shippingMethod?: string | null; createdAt: number; paidAt: number | null; giftMessage: string | null; customer: { name: string | null; email: string | null }; address: { recipientName: string; line1: string; line2: string; city: string; state: string; postalCode: string } | null };
+  items: { name: string; sku: string; size: string; colour: string; unitMinor: number; qty: number; lineMinor: number; giftId?: string | null }[];
+  gifts: { id: string; bundleName: string; packagingName: string | null; message: string | null; recipientName: string | null }[];
+  shipments: { carrier: string | null; trackingNumber: string | null; trackingUrl: string | null; status: string }[];
   payment: { status: string; provider: string } | null;
   timeline: { status: string; at: number }[];
 }
@@ -110,11 +112,24 @@ export default function OrderPage() {
       </ul>
       <dl className="mt-4 ml-auto max-w-xs space-y-1 text-sm">
         <div className="flex justify-between"><dt>Subtotal</dt><dd>{money(o.subtotalMinor)}</dd></div>
-        {o.discountMinor > 0 && <div className="flex justify-between"><dt>Discount {o.promotionCode ? `(${o.promotionCode})` : ""}</dt><dd>−{money(o.discountMinor)}</dd></div>}
-        <div className="flex justify-between"><dt>Delivery</dt><dd>{o.shippingMinor > 0 ? money(o.shippingMinor) : "Confirmed by us"}</dd></div>
+        {(o.bundleDiscountMinor ?? 0) > 0 && <div className="flex justify-between"><dt>Gift saving</dt><dd>−{money(o.bundleDiscountMinor ?? 0)}</dd></div>}
+        {o.discountMinor - (o.bundleDiscountMinor ?? 0) > 0 && <div className="flex justify-between"><dt>Discount {o.promotionCode ? `(${o.promotionCode})` : ""}</dt><dd>−{money(o.discountMinor - (o.bundleDiscountMinor ?? 0))}</dd></div>}
+        <div className="flex justify-between"><dt>Delivery{o.shippingMethod ? ` (${o.shippingMethod})` : ""}</dt><dd>{o.shippingMinor > 0 ? money(o.shippingMinor) : o.shippingMethod ? "Free" : "Confirmed by us"}</dd></div>
         <div className="flex justify-between border-t border-dashed border-gold pt-2 text-base font-medium"><dt>Total</dt><dd>{money(o.totalMinor)}</dd></div>
       </dl>
 
+      {view.gifts.length > 0 && (
+        <>
+          <h2 className="mt-10 !text-2xl">Gifts</h2>
+          <ul className="mt-2 space-y-2 text-sm">{view.gifts.map((g) => <li key={g.id} className="border border-dashed border-gold p-3"><strong>{g.bundleName}</strong>{g.recipientName ? ` for ${g.recipientName}` : ""}{g.packagingName ? ` · ${g.packagingName}` : ""}{g.message && <span className="block">Message: “{g.message}”</span>}</li>)}</ul>
+        </>
+      )}
+      {view.shipments.length > 0 && (
+        <>
+          <h2 className="mt-10 !text-2xl">Delivery tracking</h2>
+          <ul className="mt-2 space-y-2 text-sm">{view.shipments.map((s, i) => <li key={i} className="border border-dashed border-gold p-3"><strong>{s.status}</strong>{s.carrier ? ` · ${s.carrier}` : ""}{s.trackingNumber ? ` · ${s.trackingNumber}` : ""}{s.trackingUrl && <> · <a className="link-line" href={s.trackingUrl} target="_blank" rel="noopener noreferrer">Track</a></>}</li>)}</ul>
+        </>
+      )}
       {o.address && (
         <>
           <h2 className="mt-10 !text-2xl">Delivery to</h2>

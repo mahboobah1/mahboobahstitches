@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { HeartIcon, WhatsAppIcon } from "../components/Icons";
 import { PlaceholderImage } from "../components/PlaceholderImage";
 import { ProductGrid } from "../components/ProductGrid";
+import { Reviews } from "../components/Reviews";
 import { useCatalogue } from "../context/CatalogueContext";
 import { useStore } from "../context/StoreContext";
 import { fulfilmentLabel, isOnRequest, priceLabel } from "../lib/format";
@@ -155,6 +156,8 @@ export default function ProductPage() {
           )}
         </div>
       </div>
+
+      <Reviews slug={product.slug} />
 
       {related.length > 0 && (
         <section className="mt-16" aria-labelledby="related-title">
