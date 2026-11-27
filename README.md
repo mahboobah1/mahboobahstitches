@@ -3,7 +3,12 @@
 Modest fashion e-commerce: React + Vite + TypeScript + Tailwind on Cloudflare Pages,
 with a Cloudflare Workers / D1 backend arriving in later phases.
 
-## Status: Phase 5 (bespoke tailoring and appointment booking)
+## Status: Phases 6 and 7 (shipping, Gift Studio, reviews, analytics, SEO)
+Added: delivery zones and options by country and state, shipments with tracking, Gift Studio (fixed and build-your-own gifts,
+packaging, messages, component stock), reviews from verified buyers, newsletter signups, customers, analytics and CSV exports,
+page tags, structured data and a sitemap for search and WhatsApp previews.
+
+## Phase 5 (bespoke tailoring and appointment booking)
 Added: bespoke request form with photo uploads, quotations, approval and conversion to a payable order; booking calendar with
 opening hours, closed days, clash prevention, cancellation and rescheduling; customer private links; admin Bespoke, Bookings and
 Availability screens. WhatsApp enquiry buttons carry the request or booking reference.
